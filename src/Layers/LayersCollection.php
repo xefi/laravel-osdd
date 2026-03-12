@@ -7,6 +7,11 @@ use Symfony\Component\Finder\Finder;
 
 class LayersCollection extends Collection
 {
+    public static function fromConfig(): self
+    {
+        return static::discover(...array_values(config('osdd.layers.paths', [])));
+    }
+
     public static function discover(string ...$paths): self
     {
         return new self(

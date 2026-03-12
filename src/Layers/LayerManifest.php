@@ -35,4 +35,15 @@ class LayerManifest
     {
         return $this->type() === 'layer';
     }
+
+    public function rootNamespace(): string
+    {
+        return array_key_first($this->data['autoload']['psr-4'] ?? []) ?? '';
+    }
+
+    public function srcPath(string $layerPath): string
+    {
+        $relative = current($this->data['autoload']['psr-4'] ?? ['src/']);
+        return rtrim($layerPath, '/') . '/' . trim($relative, '/');
+    }
 }
