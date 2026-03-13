@@ -2,13 +2,15 @@
 
 namespace Xefi\LaravelOSDD\Layers;
 
+use Illuminate\Filesystem\Filesystem;
+
 class LayerManifest
 {
     private function __construct(private readonly array $data) {}
 
     public static function fromPath(string $path): self
     {
-        return new self(json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR));
+        return new self(json_decode(app(Filesystem::class)->get($path), true, 512, JSON_THROW_ON_ERROR));
     }
 
     public function name(): string

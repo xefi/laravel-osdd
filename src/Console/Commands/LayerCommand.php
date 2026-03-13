@@ -3,6 +3,7 @@
 namespace Xefi\LaravelOSDD\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\multiselect;
@@ -25,6 +26,20 @@ class LayerCommand extends Command
         'src/Policies',
         'src/Providers',
     ];
+
+    /**
+     * The filesystem instance.
+     *
+     * @var \Illuminate\Filesystem\Filesystem
+     */
+    protected $files;
+
+    public function __construct(Filesystem $files)
+    {
+        parent::__construct();
+
+        $this->files = $files;
+    }
 
     public function handle(): int
     {
@@ -94,7 +109,7 @@ class LayerCommand extends Command
         foreach ($components as $component) {
             $componentPath = $layerPath . '/' . $component;
 
-            mkdir($componentPath, recursive: true);
+            $this->files->makeDirectory($componentPath, 0755, true, true);
 
             if ($component === 'src/Providers') {
                 $this->createFile(
@@ -103,7 +118,7 @@ class LayerCommand extends Command
                     ['{{ namespace }}' => $namespace, '{{ class }}' => $serviceProviderClass],
                 );
             } else {
-                touch($componentPath . '/.gitkeep');
+                $this->files->put($componentPath . '/.gitkeep', '');
             }
         }
     }
@@ -112,16 +127,16 @@ class LayerCommand extends Command
     {
         $directory = dirname($path);
 
-        if (!is_dir($directory)) {
-            mkdir($directory, recursive: true);
+        if (!$this->files->isDirectory($directory)) {
+            $this->files->makeDirectory($directory, 0755, true, true);
         }
 
-        file_put_contents($path, str_replace(array_keys($replacements), array_values($replacements), $contents));
+        $this->files->put($path, str_replace(array_keys($replacements), array_values($replacements), $contents));
     }
 
     private function resolveStub(string $stub): string
     {
-        return file_get_contents(__DIR__ . '/../stubs/layer/' . $stub . '.stub');
+        return $this->files->get(__DIR__ . '/../stubs/layer/' . $stub . '.stub');
     }
 
     private function toNamespace(string $vendor, string $package): string

@@ -2,6 +2,7 @@
 
 namespace Xefi\LaravelOSDD\Layers;
 
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Finder\SplFileInfo;
 
 class Layer
@@ -23,7 +24,7 @@ class Layer
     {
         $composerPath = $directory->getRealPath() . '/composer.json';
 
-        if (!is_file($composerPath)) {
+        if (!app(Filesystem::class)->isFile($composerPath)) {
             return false;
         }
 
