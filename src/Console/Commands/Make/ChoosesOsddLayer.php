@@ -25,7 +25,7 @@ trait ChoosesOsddLayer
 
             if ($layer === null) {
                 $this->components->error("Layer '{$layerOption}' not found.");
-                exit(1);
+                throw new \RuntimeException("Layer '{$layerOption}' not found.");
             }
 
             return $this->resolvedLayer = $layer;
