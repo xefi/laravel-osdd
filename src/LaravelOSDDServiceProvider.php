@@ -4,6 +4,7 @@ namespace Xefi\LaravelOSDD;
 
 use Illuminate\Support\ServiceProvider;
 use Xefi\LaravelOSDD\Console\Commands\Make\FactoryMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ModelMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\LayerCommand;
 use Xefi\LaravelOSDD\Console\Commands\StartCommand;
 
@@ -19,6 +20,7 @@ class LaravelOSDDServiceProvider extends ServiceProvider
                 LayerCommand::class,
                 StartCommand::class,
                 FactoryMakeCommand::class,
+                ModelMakeCommand::class,
             ]);
         }
 
