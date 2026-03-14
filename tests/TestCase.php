@@ -2,12 +2,9 @@
 
 namespace Xefi\LaravelOSDD\Tests;
 
-use Xefi\LaravelOSDD\LaravelOSDDServiceProvider;
+use Orchestra\Testbench\Concerns\WithWorkbench;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
-    protected function getPackageProviders($app): array
-    {
-        return [LaravelOSDDServiceProvider::class];
-    }
+    use WithWorkbench;
 }

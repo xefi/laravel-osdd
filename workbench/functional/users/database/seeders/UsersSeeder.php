@@ -1,12 +1,12 @@
 <?php
 
-namespace database\seeders;
+namespace Functional\Users\Database\Seeders;
 
+use Functional\Users\Database\Factories\UserFactory;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Workbench\Workbench\Database\Factories\UserFactory;
 
-class DatabaseSeeder extends Seeder
+class UsersSeeder extends Seeder
 {
     use WithoutModelEvents;
 
