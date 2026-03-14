@@ -47,4 +47,19 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
             '--layer' => $this->resolveLayer()->manifest->name(),
         ]);
     }
+
+    protected function createMigration(): void
+    {
+        $table = Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
+
+        if ($this->option('pivot')) {
+            $table = Str::singular($table);
+        }
+
+        $this->call('osdd:migration', [
+            'name' => "create_{$table}_table",
+            '--create' => $table,
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]);
+    }
 }

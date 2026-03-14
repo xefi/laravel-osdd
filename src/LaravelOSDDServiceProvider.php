@@ -4,6 +4,7 @@ namespace Xefi\LaravelOSDD;
 
 use Illuminate\Support\ServiceProvider;
 use Xefi\LaravelOSDD\Console\Commands\Make\FactoryMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\MigrateMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ModelMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\LayerCommand;
 use Xefi\LaravelOSDD\Console\Commands\StartCommand;
@@ -20,6 +21,7 @@ class LaravelOSDDServiceProvider extends ServiceProvider
                 LayerCommand::class,
                 StartCommand::class,
                 FactoryMakeCommand::class,
+                MigrateMakeCommand::class,
                 ModelMakeCommand::class,
             ]);
         }
@@ -37,5 +39,9 @@ class LaravelOSDDServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/osdd.php', 'osdd'
         );
+
+        $this->app->singleton(MigrateMakeCommand::class, function ($app) {
+            return new MigrateMakeCommand($app['migration.creator'], $app['composer']);
+        });
     }
 }
