@@ -23,6 +23,10 @@ class LayersCollection extends Collection
 
     private static function scanPath(string $path): array
     {
+        if (!is_dir($path)) {
+            return [];
+        }
+
         $layers = [];
 
         foreach ((new Finder)->depth(0)->directories()->in($path) as $directory) {

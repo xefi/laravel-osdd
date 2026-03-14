@@ -3,8 +3,8 @@
 return [
     'layers' => [
         'paths' => [
-            'technical' => base_path('technical'),
             'functional' => base_path('functional'),
+            'technical' => base_path('technical'),
         ]
     ]
 ];

@@ -1,2 +1,6 @@
 .env
 .env.dusk
+bootstrap/cache/*
+!bootstrap/cache/.gitkeep
+storage/logs/*.log
+vendor

@@ -1,6 +1,7 @@
-laravel: '@testbench'
+laravel: './workbench'
 
 providers:
+  - Xefi\LaravelOSDD\LaravelOSDDServiceProvider
   # - Workbench\App\Providers\WorkbenchServiceProvider
 
 migrations:
