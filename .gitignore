@@ -4,9 +4,7 @@
 composer.lock
 workbench/functional/my-layer/
 workbench/functional/my-auth-layer/
-workbench/functional/test-layer/src/Models/
-workbench/functional/test-layer/src/Policies/
-workbench/functional/test-layer/src/Providers/
+workbench/functional/test-layer/src/
 workbench/functional/test-layer/database/factories/
 workbench/functional/test-layer/database/seeders/
 workbench/technical/

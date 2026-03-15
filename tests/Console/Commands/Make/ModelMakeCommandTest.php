@@ -13,6 +13,7 @@ class ModelMakeCommandTest extends TestCase
     {
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Models'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Policies'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Http'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/factories'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/seeders'));
 
@@ -73,6 +74,16 @@ class ModelMakeCommandTest extends TestCase
 
         $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
         $this->assertFilenameExists('functional/test-layer/database/factories/UserFactory.php');
+    }
+
+    public function testItGeneratesFormRequestsAlongsideModel(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--requests' => true])
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
+        $this->assertFilenameExists('functional/test-layer/src/Http/Requests/StoreUserRequest.php');
+        $this->assertFilenameExists('functional/test-layer/src/Http/Requests/UpdateUserRequest.php');
     }
 
     public function testItGeneratesPolicyAlongsideModel(): void

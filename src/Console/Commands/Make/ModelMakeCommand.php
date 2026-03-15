@@ -48,6 +48,21 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
         ]);
     }
 
+    protected function createFormRequests(): void
+    {
+        $request = Str::studly($this->argument('name'));
+
+        $this->call('osdd:request', [
+            'name' => "Store{$request}Request",
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]);
+
+        $this->call('osdd:request', [
+            'name' => "Update{$request}Request",
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]);
+    }
+
     protected function createPolicy(): void
     {
         $policy = Str::studly($this->argument('name'));
