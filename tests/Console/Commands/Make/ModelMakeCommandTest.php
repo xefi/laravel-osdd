@@ -39,7 +39,7 @@ class ModelMakeCommandTest extends TestCase
     public function testItPromptsForLayerWhenNotProvided(): void
     {
         $this->artisan('osdd:model', ['name' => 'User'])
-            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer', 'functional/users' => 'functional/users'])
+            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer'])
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/test-layer/src/Models/User.php');

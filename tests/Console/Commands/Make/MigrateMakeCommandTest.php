@@ -30,7 +30,7 @@ class MigrateMakeCommandTest extends TestCase
     public function testItPromptsForLayerWhenNotProvided(): void
     {
         $this->artisan('osdd:migration', ['name' => 'create_users_table'])
-            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer', 'functional/users' => 'functional/users'])
+            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer'])
             ->assertExitCode(0);
 
         $files = glob($this->app->basePath('functional/test-layer/database/migrations/*_create_users_table.php'));

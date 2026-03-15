@@ -54,7 +54,7 @@ class ServiceProviderMakeCommandTest extends TestCase
     public function testItPromptsForLayerWhenNotProvided(): void
     {
         $this->artisan('osdd:provider', ['name' => 'TestLayerServiceProvider'])
-            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer', 'functional/users' => 'functional/users'])
+            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer'])
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/test-layer/src/Providers/TestLayerServiceProvider.php');
