@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Xefi\LaravelOSDD\Console\Commands\Make\FactoryMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\MigrateMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ModelMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\PolicyMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\SeederMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ServiceProviderMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\LayerCommand;
@@ -25,6 +26,7 @@ class LaravelOSDDServiceProvider extends ServiceProvider
                 FactoryMakeCommand::class,
                 MigrateMakeCommand::class,
                 ModelMakeCommand::class,
+                PolicyMakeCommand::class,
                 SeederMakeCommand::class,
                 ServiceProviderMakeCommand::class,
             ]);

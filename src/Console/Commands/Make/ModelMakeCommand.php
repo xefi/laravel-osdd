@@ -48,6 +48,17 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
         ]);
     }
 
+    protected function createPolicy(): void
+    {
+        $policy = Str::studly($this->argument('name'));
+
+        $this->call('osdd:policy', [
+            'name' => "{$policy}Policy",
+            '--model' => $this->qualifyClass($this->getNameInput()),
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]);
+    }
+
     protected function createSeeder(): void
     {
         $seeder = Str::studly($this->argument('name'));

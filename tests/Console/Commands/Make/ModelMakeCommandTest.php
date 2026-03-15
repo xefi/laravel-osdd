@@ -12,6 +12,7 @@ class ModelMakeCommandTest extends TestCase
     protected function tearDown(): void
     {
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Models'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Policies'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/factories'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/seeders'));
 
@@ -72,6 +73,15 @@ class ModelMakeCommandTest extends TestCase
 
         $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
         $this->assertFilenameExists('functional/test-layer/database/factories/UserFactory.php');
+    }
+
+    public function testItGeneratesPolicyAlongsideModel(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--policy' => true])
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
+        $this->assertFilenameExists('functional/test-layer/src/Policies/UserPolicy.php');
     }
 
     public function testItGeneratesSeederAlongsideModel(): void
