@@ -1,20 +1,21 @@
 {
     "name": "functional/users",
-    "description": "Functional layer for the users part of the application",
     "type": "layer",
     "require": {
         "xefi/laravel-osdd": "*"
     },
-    "require-dev": {},
-    "autoload": {
-        "psr-4": {
-            "Functional\\Users\\": "src/"
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Functional\\Users\\Providers\\UsersServiceProvider"
+            ]
         }
     },
-    "autoload-dev": {
+    "autoload": {
         "psr-4": {
-            "Functional\\Users\\\\Database\\Factories\\": "database/factories/",
-            "Functional\\Users\\\\Database\\Seeders\\": "database/seeders/"
+            "Functional\\Users\\": "src/",
+            "Functional\\Users\\Database\\Factories\\": "database/factories/",
+            "Functional\\Users\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "minimum-stability": "stable",

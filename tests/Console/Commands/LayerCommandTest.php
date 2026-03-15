@@ -7,19 +7,13 @@ use Xefi\LaravelOSDD\Tests\TestCase;
 
 class LayerCommandTest extends TestCase
 {
+    // @TODO: traits internal ?
     use InteractsWithPublishedFiles;
-
-    protected function getEnvironmentSetUp($app): void
-    {
-        $app['config']->set('osdd.layers.paths', [
-            'functional' => $app->basePath('functional'),
-        ]);
-    }
 
     protected function tearDown(): void
     {
-        $this->app['files']->deleteDirectory($this->app->basePath('functional'));
-        $this->app['files']->deleteDirectory($this->app->basePath('technical'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/my-layer'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/my-auth-layer'));
 
         parent::tearDown();
     }
@@ -96,10 +90,7 @@ class LayerCommandTest extends TestCase
 
     public function testItAsksForPathWhenMultiplePathsAreConfigured(): void
     {
-        $this->app['config']->set('osdd.layers.paths', [
-            'technical' => $this->app->basePath('technical'),
-            'functional' => $this->app->basePath('functional'),
-        ]);
+        $this->app['config']->set('osdd.layers.paths.technical', $this->app->basePath('technical'));
 
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')

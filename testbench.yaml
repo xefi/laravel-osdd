@@ -2,6 +2,7 @@ laravel: './workbench'
 
 providers:
   - Xefi\LaravelOSDD\LaravelOSDDServiceProvider
+  - Functional\Users\Providers\UsersServiceProvider
   # - Workbench\App\Providers\WorkbenchServiceProvider
 
 migrations:

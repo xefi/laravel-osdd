@@ -23,7 +23,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Xefi\\LaravelOSDD\\Tests\\": "tests/"
+            "Xefi\\LaravelOSDD\\Tests\\": "tests/",
+            "Functional\\Users\\": "workbench/functional/users/src/"
         }
     },
     "minimum-stability": "stable",

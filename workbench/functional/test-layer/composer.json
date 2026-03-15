@@ -1,0 +1,9 @@
+{
+    "name": "functional/test-layer",
+    "type": "layer",
+    "autoload": {
+        "psr-4": {
+            "Functional\\TestLayer\\": "src/"
+        }
+    }
+}
