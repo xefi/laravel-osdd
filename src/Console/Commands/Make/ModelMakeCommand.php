@@ -48,6 +48,16 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
         ]);
     }
 
+    protected function createSeeder(): void
+    {
+        $seeder = Str::studly($this->argument('name'));
+
+        $this->call('osdd:seeder', [
+            'name' => "{$seeder}Seeder",
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]);
+    }
+
     protected function createMigration(): void
     {
         $table = Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
