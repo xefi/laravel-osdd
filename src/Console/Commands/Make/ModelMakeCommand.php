@@ -48,6 +48,19 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
         ]);
     }
 
+    protected function createController(): void
+    {
+        $controller = Str::studly($this->argument('name'));
+
+        $this->call('osdd:controller', array_filter([
+            'name' => "{$controller}Controller",
+            '--model' => $this->qualifyClass($this->getNameInput()),
+            '--resource' => true,
+            '--requests' => $this->option('requests'),
+            '--layer' => $this->resolveLayer()->manifest->name(),
+        ]));
+    }
+
     protected function createFormRequests(): void
     {
         $request = Str::studly($this->argument('name'));

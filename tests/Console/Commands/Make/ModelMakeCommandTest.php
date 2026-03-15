@@ -76,6 +76,15 @@ class ModelMakeCommandTest extends TestCase
         $this->assertFilenameExists('functional/test-layer/database/factories/UserFactory.php');
     }
 
+    public function testItGeneratesControllerAlongsideModel(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--controller' => true, '--resource' => true])
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
+        $this->assertFilenameExists('functional/test-layer/src/Http/Controllers/UserController.php');
+    }
+
     public function testItGeneratesFormRequestsAlongsideModel(): void
     {
         $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--requests' => true])
