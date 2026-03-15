@@ -17,6 +17,10 @@ class ModelMakeCommandTest extends TestCase
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/factories'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/database/seeders'));
 
+        foreach ($this->app['files']->glob($this->app->basePath('functional/test-layer/database/migrations/*.php')) as $file) {
+            $this->app['files']->delete($file);
+        }
+
         parent::tearDown();
     }
 
@@ -111,5 +115,16 @@ class ModelMakeCommandTest extends TestCase
 
         $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
         $this->assertFilenameExists('functional/test-layer/database/seeders/UserSeeder.php');
+    }
+
+    public function testItGeneratesMigrationAlongsideModel(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--migration' => true])
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
+
+        $migrations = $this->app['files']->glob($this->app->basePath('functional/test-layer/database/migrations/*.php'));
+        $this->assertNotEmpty($migrations);
     }
 }

@@ -100,4 +100,15 @@ class ServiceProviderMakeCommandTest extends TestCase
 
         $this->assertFilenameExists('functional/test-layer/src/Providers/Admin/AdminServiceProvider.php');
     }
+
+    public function testItGeneratesNestedProviderWithCorrectNamespace(): void
+    {
+        $this->artisan('osdd:provider', ['name' => 'Admin/AdminServiceProvider', '--layer' => 'functional/test-layer'])
+            ->assertExitCode(0);
+
+        $this->assertFileContains([
+            'namespace Functional\TestLayer\Providers\Admin;',
+            'class AdminServiceProvider extends ServiceProvider',
+        ], 'functional/test-layer/src/Providers/Admin/AdminServiceProvider.php');
+    }
 }

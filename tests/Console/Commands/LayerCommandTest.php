@@ -7,7 +7,6 @@ use Xefi\LaravelOSDD\Tests\TestCase;
 
 class LayerCommandTest extends TestCase
 {
-    // @TODO: traits internal ?
     use InteractsWithPublishedFiles;
 
     protected function tearDown(): void

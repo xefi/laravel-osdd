@@ -4,3 +4,6 @@ bootstrap/cache/*
 !bootstrap/cache/.gitkeep
 storage/logs/*.log
 vendor
+functional/*/src/
+/functional/*/database/factories/
+/functional/*/database/seeders/
