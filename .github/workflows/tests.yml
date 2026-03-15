@@ -17,9 +17,13 @@ jobs:
         laravel: [12, 13]
         include:
           - laravel: 12
+            framework: ^12.0
             testbench: ^10.0
+            stability: stable
           - laravel: 13
-            testbench: ^11.0
+            framework: 13.x-dev
+            testbench: 11.x-dev
+            stability: dev
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
 
@@ -36,10 +40,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require \
-            "laravel/framework:^${{ matrix.laravel }}" \
-            "orchestra/testbench:${{ matrix.testbench }}" \
-            --no-interaction --no-update
+          composer config minimum-stability ${{ matrix.stability }}
+          composer require "laravel/framework:${{ matrix.framework }}" --no-interaction --no-update
+          composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction
 
       - name: Run tests
