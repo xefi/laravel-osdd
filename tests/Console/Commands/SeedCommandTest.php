@@ -19,9 +19,9 @@ class SeedCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function testItSkipsPathsThatDoNotExist(): void
+    public function testItSkipsNonExistentSeederClasses(): void
     {
-        $this->app->make(SeederRegistry::class)->loadFrom('/non/existent/path');
+        $this->app->make(SeederRegistry::class)->push('NonExistent\\Seeder');
 
         $this->artisan('osdd:seed')->assertExitCode(0);
     }

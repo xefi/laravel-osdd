@@ -34,6 +34,11 @@ class SeedCommand extends Command
         }
 
         foreach ($seeders as $seederClass) {
+            if (!class_exists($seederClass)) {
+                $this->warn("Seeder class <comment>{$seederClass}</comment> not found, skipping.");
+                continue;
+            }
+
             $this->info("Seeding <comment>{$seederClass}</comment>...");
             $this->call('db:seed', ['--class' => $seederClass]);
         }

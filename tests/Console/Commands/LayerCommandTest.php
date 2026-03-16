@@ -137,7 +137,7 @@ class LayerCommandTest extends TestCase
 
         $this->assertFileContains([
             'namespace Acme\MyAuthLayer\Providers;',
-            'class MyAuthLayerServiceProvider extends ServiceProvider',
+            'class MyAuthLayerServiceProvider extends LayerServiceProvider',
         ], 'functional/my-auth-layer/src/Providers/MyAuthLayerServiceProvider.php');
     }
 
