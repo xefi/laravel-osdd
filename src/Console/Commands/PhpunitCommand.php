@@ -71,7 +71,8 @@ class PhpunitCommand extends Command
                 continue;
             }
 
-            $relativeTestDir = Str::replaceFirst($basePath, '', $layer->path . DIRECTORY_SEPARATOR . 'tests');
+            $relativeTestDir = Str::replaceFirst($basePath, '', $layer->path . '/tests');
+            $relativeTestDir = str_replace('\\', '/', $relativeTestDir);
 
             $suite = $dom->createElement('testsuite');
             $suite->setAttribute('name', $layerName);
