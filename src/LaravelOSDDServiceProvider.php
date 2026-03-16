@@ -11,7 +11,9 @@ use Xefi\LaravelOSDD\Console\Commands\Make\PolicyMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\RequestMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\SeederMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ServiceProviderMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\TestMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\LayerCommand;
+use Xefi\LaravelOSDD\Console\Commands\PhpunitCommand;
 use Xefi\LaravelOSDD\SeederRegistry;
 use Xefi\LaravelOSDD\Console\Commands\SeedCommand;
 use Xefi\LaravelOSDD\Console\Commands\StartCommand;
@@ -35,6 +37,8 @@ class LaravelOSDDServiceProvider extends ServiceProvider
                 RequestMakeCommand::class,
                 SeederMakeCommand::class,
                 ServiceProviderMakeCommand::class,
+                TestMakeCommand::class,
+                PhpunitCommand::class,
                 SeedCommand::class,
             ]);
         }
