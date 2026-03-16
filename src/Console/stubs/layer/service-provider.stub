@@ -2,13 +2,17 @@
 
 namespace {{ namespace }}\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use {{ namespace }}\Database\Seeders\{{ seederClass }};
+use Xefi\LaravelOSDD\LayerServiceProvider;
 
-class {{ class }} extends ServiceProvider
+class {{ class }} extends LayerServiceProvider
 {
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        if ($this->app->runningInConsole()) {
+            $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+            $this->loadSeeders([{{ seederClass }}::class]);
+        }
     }
 
     public function register(): void

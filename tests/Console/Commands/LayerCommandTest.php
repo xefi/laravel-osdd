@@ -29,6 +29,21 @@ class LayerCommandTest extends TestCase
         }
     }
 
+    public function testItGeneratesNamedSeederForLayer(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')
+            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/my-layer/database/seeders/MyLayerSeeder.php');
+
+        $this->assertFileContains([
+            'namespace Acme\MyLayer\Database\Seeders;',
+            'class MyLayerSeeder extends Seeder',
+        ], 'functional/my-layer/database/seeders/MyLayerSeeder.php');
+    }
+
     public function testItCreatesCorrectComposerJson(): void
     {
         $this->artisan('osdd:layer')
@@ -53,8 +68,9 @@ class LayerCommandTest extends TestCase
 
         $this->assertFileContains([
             'namespace Acme\MyLayer\Providers;',
-            'class MyLayerServiceProvider extends ServiceProvider',
+            'class MyLayerServiceProvider extends LayerServiceProvider',
             "loadMigrationsFrom(__DIR__ . '/../../database/migrations')",
+            'loadSeeders([MyLayerSeeder::class])',
         ], 'functional/my-layer/src/Providers/MyLayerServiceProvider.php');
     }
 

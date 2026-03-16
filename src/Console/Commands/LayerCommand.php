@@ -4,6 +4,7 @@ namespace Xefi\LaravelOSDD\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\multiselect;
@@ -98,7 +99,6 @@ class LayerCommand extends Command
 
         $layerPath = $targetPath . '/' . $package;
         $namespace = $this->toNamespace($vendor, $package);
-        $serviceProviderClass = $this->toServiceProviderClass($package);
 
         $this->createFile(
             $layerPath . '/composer.json',
@@ -106,21 +106,39 @@ class LayerCommand extends Command
             ['{{ name }}' => $name, '{{ namespace }}' => str_replace('\\', '\\\\', $namespace)],
         );
 
+        $generators = [
+            'src/Providers' => fn(string $path) => $this->generateServiceProvider($path, $namespace, $package),
+            'database/seeders' => fn() => $this->call('osdd:seeder', ['name' => $this->toSeederClass($package), '--layer' => $name]),
+        ];
+
         foreach ($components as $component) {
-            $componentPath = $layerPath . '/' . $component;
-
-            $this->files->makeDirectory($componentPath, 0755, true, true);
-
-            if ($component === 'src/Providers') {
-                $this->createFile(
-                    $componentPath . '/' . $serviceProviderClass . '.php',
-                    $this->resolveStub('service-provider'),
-                    ['{{ namespace }}' => $namespace, '{{ class }}' => $serviceProviderClass],
-                );
-            } else {
-                $this->files->put($componentPath . '/.gitkeep', '');
-            }
+            $path = $layerPath . '/' . $component;
+            isset($generators[$component])
+                ? ($generators[$component])($path)
+                : $this->generateDirectory($path);
         }
+    }
+
+    private function generateServiceProvider(string $path, string $namespace, string $package): void
+    {
+        $serviceProviderClass = $this->toServiceProviderClass($package);
+
+        $this->files->makeDirectory($path, 0755, true, true);
+        $this->createFile(
+            $path . '/' . $serviceProviderClass . '.php',
+            $this->resolveStub('service-provider'),
+            [
+                '{{ namespace }}' => $namespace,
+                '{{ class }}' => $serviceProviderClass,
+                '{{ seederClass }}' => $this->toSeederClass($package),
+            ],
+        );
+    }
+
+    private function generateDirectory(string $path): void
+    {
+        $this->files->makeDirectory($path, 0755, true, true);
+        $this->files->put($path . '/.gitkeep', '');
     }
 
     private function createFile(string $path, string $contents, array $replacements = []): void
@@ -141,16 +159,16 @@ class LayerCommand extends Command
 
     private function toNamespace(string $vendor, string $package): string
     {
-        return $this->toPascalCase($vendor) . '\\' . $this->toPascalCase($package);
+        return Str::pascal($vendor) . '\\' . Str::pascal($package);
     }
 
     private function toServiceProviderClass(string $package): string
     {
-        return $this->toPascalCase($package) . 'ServiceProvider';
+        return Str::pascal($package) . 'ServiceProvider';
     }
 
-    private function toPascalCase(string $value): string
+    private function toSeederClass(string $package): string
     {
-        return implode('', array_map(ucfirst(...), explode('-', $value)));
+        return Str::pascal($package) . 'Seeder';
     }
 }

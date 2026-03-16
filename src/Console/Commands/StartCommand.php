@@ -72,6 +72,10 @@ class StartCommand extends Command
         );
 
         foreach ($components as $component) {
+            if ($component === 'database/seeders') {
+                continue;
+            }
+
             $componentPath = $layerPath . '/' . $component;
 
             $this->files->makeDirectory($componentPath, 0755, true, true);
@@ -80,12 +84,17 @@ class StartCommand extends Command
                 $this->createFile(
                     $componentPath . '/UsersServiceProvider.php',
                     $this->resolveStub('service-provider'),
-                    ['{{ namespace }}' => self::LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider'],
+                    ['{{ namespace }}' => self::LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
                 );
             } else {
                 $this->files->put($componentPath . '/.gitkeep', '');
             }
         }
+
+        $this->call('osdd:seeder', [
+            'name' => 'UsersSeeder',
+            '--layer' => self::LAYER_NAME,
+        ]);
 
         $this->components->info('Layer <options=bold>' . self::LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
     }

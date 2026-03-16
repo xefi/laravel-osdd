@@ -49,7 +49,7 @@ class StartCommandTest extends TestCase
         $this->assertFileExists($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
         $this->assertFileExists($this->projectPath . '/functional/users/database/migrations/.gitkeep');
         $this->assertFileExists($this->projectPath . '/functional/users/database/factories/.gitkeep');
-        $this->assertFileExists($this->projectPath . '/functional/users/database/seeders/.gitkeep');
+        $this->assertFileExists($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
         $this->assertFileExists($this->projectPath . '/functional/users/src/Models/.gitkeep');
         $this->assertFileExists($this->projectPath . '/functional/users/src/Factories/.gitkeep');
         $this->assertFileExists($this->projectPath . '/functional/users/src/Policies/.gitkeep');
@@ -66,6 +66,16 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('"Functional\\\\Users\\\\": "src/"', $contents);
     }
 
+    public function testItGeneratesUsersSeederForUsersLayer(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $contents = file_get_contents($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
+
+        $this->assertStringContainsString('namespace Functional\Users\Database\Seeders;', $contents);
+        $this->assertStringContainsString('class UsersSeeder extends Seeder', $contents);
+    }
+
     public function testItCreatesTheUsersServiceProvider(): void
     {
         $this->artisan('osdd:start')->assertExitCode(0);
@@ -73,8 +83,9 @@ class StartCommandTest extends TestCase
         $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
 
         $this->assertStringContainsString('namespace Functional\Users\Providers;', $contents);
-        $this->assertStringContainsString('class UsersServiceProvider extends ServiceProvider', $contents);
+        $this->assertStringContainsString('class UsersServiceProvider extends LayerServiceProvider', $contents);
         $this->assertStringContainsString("loadMigrationsFrom(__DIR__ . '/../../database/migrations')", $contents);
+        $this->assertStringContainsString('loadSeeders([UsersSeeder::class])', $contents);
     }
 
     public function testItMovesTheUserModelWithCorrectNamespace(): void
