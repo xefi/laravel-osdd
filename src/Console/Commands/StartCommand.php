@@ -37,6 +37,8 @@ class StartCommand extends Command
         $this->moveUserFactory($layerPath);
         $this->moveUserMigrations($layerPath);
         $this->deleteAppDirectory();
+        $this->deleteDatabaseDirectory();
+        $this->deleteConfigDirectory();
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
 
@@ -180,6 +182,34 @@ class StartCommand extends Command
         $this->files->deleteDirectory($appPath);
 
         $this->components->info('Deleted app/ directory.');
+    }
+
+    private function deleteDatabaseDirectory(): void
+    {
+        $path = $this->laravel->basePath('database');
+
+        if (!$this->files->isDirectory($path)) {
+            $this->components->warn('No database/ directory found, skipping.');
+            return;
+        }
+
+        $this->files->deleteDirectory($path);
+
+        $this->components->info('Deleted database/ directory.');
+    }
+
+    private function deleteConfigDirectory(): void
+    {
+        $path = $this->laravel->basePath('config');
+
+        if (!$this->files->isDirectory($path)) {
+            $this->components->warn('No config/ directory found, skipping.');
+            return;
+        }
+
+        $this->files->deleteDirectory($path);
+
+        $this->components->info('Deleted config/ directory.');
     }
 
     private function createFile(string $path, string $contents, array $replacements = []): void

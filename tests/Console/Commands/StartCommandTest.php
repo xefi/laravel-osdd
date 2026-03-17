@@ -33,6 +33,9 @@ class StartCommandTest extends TestCase
 
         mkdir($this->projectPath . '/database/migrations', 0755, true);
         file_put_contents($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php', $this->fakeUserMigration());
+
+        mkdir($this->projectPath . '/config', 0755, true);
+        file_put_contents($this->projectPath . '/config/app.php', '<?php return [];');
     }
 
     protected function tearDown(): void
@@ -135,6 +138,20 @@ class StartCommandTest extends TestCase
         $this->artisan('osdd:start')->assertExitCode(0);
 
         $this->assertDirectoryDoesNotExist($this->projectPath . '/app');
+    }
+
+    public function testItDeletesTheDatabaseDirectory(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $this->assertDirectoryDoesNotExist($this->projectPath . '/database');
+    }
+
+    public function testItDeletesTheConfigDirectory(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $this->assertDirectoryDoesNotExist($this->projectPath . '/config');
     }
 
     public function testItSkipsUserModelGracefullyWhenMissing(): void
