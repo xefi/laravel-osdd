@@ -12,10 +12,26 @@ use Xefi\LaravelOSDD\Console\Commands\Make\RequestMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\SeederMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ServiceProviderMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\TestMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\CastMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ChannelMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ClassMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ConfigMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ConsoleMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\EnumMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\EventMakeCommand;
-use Xefi\LaravelOSDD\Console\Commands\Make\ListenerMakeCommand;
-use Xefi\LaravelOSDD\Console\Commands\Make\NotificationMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\Make\ExceptionMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\InterfaceMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\JobMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ListenerMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\MailMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\MiddlewareMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\NotificationMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ObserverMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ResourceMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\RuleMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ScopeMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\TraitMakeCommand;
+use Xefi\LaravelOSDD\Console\Commands\Make\ViewMakeCommand;
 use Xefi\LaravelOSDD\Console\Commands\LayerCommand;
 use Xefi\LaravelOSDD\Console\Commands\PhpunitCommand;
 use Xefi\LaravelOSDD\SeederRegistry;
@@ -42,10 +58,26 @@ class LaravelOSDDServiceProvider extends ServiceProvider
                 SeederMakeCommand::class,
                 ServiceProviderMakeCommand::class,
                 TestMakeCommand::class,
+                CastMakeCommand::class,
+                ChannelMakeCommand::class,
+                ClassMakeCommand::class,
+                ConfigMakeCommand::class,
+                ConsoleMakeCommand::class,
+                EnumMakeCommand::class,
                 EventMakeCommand::class,
-                ListenerMakeCommand::class,
-                NotificationMakeCommand::class,
                 ExceptionMakeCommand::class,
+                InterfaceMakeCommand::class,
+                JobMakeCommand::class,
+                ListenerMakeCommand::class,
+                MailMakeCommand::class,
+                MiddlewareMakeCommand::class,
+                NotificationMakeCommand::class,
+                ObserverMakeCommand::class,
+                ResourceMakeCommand::class,
+                RuleMakeCommand::class,
+                ScopeMakeCommand::class,
+                TraitMakeCommand::class,
+                ViewMakeCommand::class,
                 PhpunitCommand::class,
                 SeedCommand::class,
             ]);
