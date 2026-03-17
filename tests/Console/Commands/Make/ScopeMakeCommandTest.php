@@ -11,7 +11,7 @@ class ScopeMakeCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Models'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/test-layer/src/Models/Scopes'));
 
         parent::tearDown();
     }
