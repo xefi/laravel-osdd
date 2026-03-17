@@ -33,6 +33,8 @@ class StartCommandTest extends TestCase
 
         mkdir($this->projectPath . '/database/migrations', 0755, true);
         file_put_contents($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php', $this->fakeUserMigration());
+
+        file_put_contents($this->projectPath . '/composer.json', json_encode(['require' => new \stdClass()], JSON_PRETTY_PRINT) . PHP_EOL);
     }
 
     protected function tearDown(): void
@@ -172,6 +174,29 @@ class StartCommandTest extends TestCase
         $this->artisan('osdd:start')->assertExitCode(0);
 
         $this->assertFileExists($custom . '/users/composer.json');
+    }
+
+    public function testItRegistersUsersLayerAsPathRepositoryInComposerJson(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
+
+        $urls = array_column($composer['repositories'] ?? [], 'url');
+        $this->assertContains('./functional/users', $urls);
+
+        $types = array_column($composer['repositories'], 'type');
+        $this->assertContains('path', $types);
+    }
+
+    public function testItAddsUsersLayerToRequireInComposerJson(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
+
+        $this->assertArrayHasKey('functional/users', $composer['require']);
+        $this->assertSame('*', $composer['require']['functional/users']);
     }
 
     // -------------------------------------------------------------------------

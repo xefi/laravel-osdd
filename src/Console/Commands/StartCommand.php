@@ -5,10 +5,12 @@ namespace Xefi\LaravelOSDD\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Xefi\LaravelOSDD\Console\Concerns\RegistersLayerInComposer;
 
 #[AsCommand(name: 'osdd:start')]
 class StartCommand extends Command
 {
+    use RegistersLayerInComposer;
     protected $name = 'osdd:start';
 
     protected $description = 'Prepare a fresh Laravel project for OSDD';
@@ -95,6 +97,8 @@ class StartCommand extends Command
             'name' => 'UsersSeeder',
             '--layer' => self::LAYER_NAME,
         ]);
+
+        $this->registerLayerInComposer(self::LAYER_NAME, $layerPath);
 
         $this->components->info('Layer <options=bold>' . self::LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
     }

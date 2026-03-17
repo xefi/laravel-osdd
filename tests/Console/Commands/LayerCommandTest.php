@@ -9,10 +9,33 @@ class LayerCommandTest extends TestCase
 {
     use InteractsWithPublishedFiles;
 
+    private string $composerPath;
+
+    private ?string $composerOriginal = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->composerPath = $this->app->basePath('composer.json');
+
+        if ($this->app['files']->exists($this->composerPath)) {
+            $this->composerOriginal = $this->app['files']->get($this->composerPath);
+        } else {
+            $this->app['files']->put($this->composerPath, json_encode(['require' => new \stdClass()], JSON_PRETTY_PRINT) . PHP_EOL);
+        }
+    }
+
     protected function tearDown(): void
     {
         $this->app['files']->deleteDirectory($this->app->basePath('functional/my-layer'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/my-auth-layer'));
+
+        if ($this->composerOriginal !== null) {
+            $this->app['files']->put($this->composerPath, $this->composerOriginal);
+        } else {
+            $this->app['files']->delete($this->composerPath);
+        }
 
         parent::tearDown();
     }
@@ -139,6 +162,64 @@ class LayerCommandTest extends TestCase
             'namespace Acme\MyAuthLayer\Providers;',
             'class MyAuthLayerServiceProvider extends LayerServiceProvider',
         ], 'functional/my-auth-layer/src/Providers/MyAuthLayerServiceProvider.php');
+    }
+
+    public function testItRegistersLayerAsPathRepositoryInComposerJson(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')
+            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->assertExitCode(0);
+
+        $composer = json_decode($this->app['files']->get($this->composerPath), true);
+
+        $urls = array_column($composer['repositories'] ?? [], 'url');
+        $this->assertContains('./functional/my-layer', $urls);
+
+        $types = array_column($composer['repositories'], 'type');
+        $this->assertContains('path', $types);
+    }
+
+    public function testItAddsLayerToRequireInComposerJson(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')
+            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->assertExitCode(0);
+
+        $composer = json_decode($this->app['files']->get($this->composerPath), true);
+
+        $this->assertArrayHasKey('acme/my-layer', $composer['require']);
+        $this->assertSame('*', $composer['require']['acme/my-layer']);
+    }
+
+    public function testItDoesNotDuplicateRepositoryOnRepeatRuns(): void
+    {
+        $run = fn() => $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')
+            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->assertExitCode(0);
+
+        $run();
+        $run();
+
+        $composer = json_decode($this->app['files']->get($this->composerPath), true);
+
+        $matching = array_filter($composer['repositories'] ?? [], fn($r) => ($r['url'] ?? '') === './functional/my-layer');
+        $this->assertCount(1, $matching);
+    }
+
+    public function testItSkipsComposerRegistrationWhenNoComposerJsonExists(): void
+    {
+        $this->app['files']->delete($this->composerPath);
+
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name (vendor/package)', 'acme/my-layer')
+            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->assertExitCode(0);
+
+        // Layer files are still created — registration is just skipped silently
+        $this->assertFilenameExists('functional/my-layer/composer.json');
     }
 
     private function allComponents(): array

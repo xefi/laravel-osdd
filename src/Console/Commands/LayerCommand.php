@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Xefi\LaravelOSDD\Console\Concerns\RegistersLayerInComposer;
 
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\select;
@@ -14,6 +15,7 @@ use function Laravel\Prompts\text;
 #[AsCommand(name: 'osdd:layer')]
 class LayerCommand extends Command
 {
+    use RegistersLayerInComposer;
     protected $name = 'osdd:layer';
 
     protected $description = 'Create a new OSDD layer';
@@ -117,6 +119,8 @@ class LayerCommand extends Command
                 ? ($generators[$component])($path)
                 : $this->generateDirectory($path);
         }
+
+        $this->registerLayerInComposer($name, $layerPath);
     }
 
     private function generateServiceProvider(string $path, string $namespace, string $package): void
