@@ -179,7 +179,10 @@ class StartCommand extends Command
             return;
         }
 
-        $this->files->deleteDirectory($path);
+        if (!$this->files->deleteDirectory($path)) {
+            $this->components->error("Failed to delete {$dir}/ directory.");
+            return;
+        }
 
         $this->components->info("Deleted {$dir}/ directory.");
     }
