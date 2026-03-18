@@ -13,4 +13,20 @@ abstract class LayerServiceProvider extends ServiceProvider
     {
         $this->app->make(SeederRegistry::class)->push(...$seeders);
     }
+
+    /**
+     * Override an already-loaded config key with values from a file.
+     * Unlike mergeConfigFrom(), the layer values take priority over the
+     * package's own defaults (and over anything else loaded earlier).
+     */
+    protected function overrideConfigFrom(string $path, string $key): void
+    {
+        $this->app->booted(function () use ($path, $key) {
+            $config = $this->app->make('config');
+            $config->set($key, array_replace_recursive(
+                $config->get($key, []),
+                require $path,
+            ));
+        });
+    }
 }
