@@ -2,7 +2,9 @@
 
 namespace Xefi\LaravelOSDD\Console\Commands\Make;
 
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 use Xefi\LaravelOSDD\Layers\Layer;
 use Xefi\LaravelOSDD\Layers\LayersCollection;
 
@@ -42,10 +44,8 @@ trait ChoosesOsddLayer
         return $this->resolvedLayer = $layers->first(fn(Layer $l) => $l->manifest->name() === $chosen);
     }
 
-    protected function interact(
-        \Symfony\Component\Console\Input\InputInterface $input,
-        \Symfony\Component\Console\Output\OutputInterface $output,
-    ): void {
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
         $this->resolveLayer();
 
         parent::interact($input, $output);
