@@ -88,9 +88,8 @@ class StartCommand extends Command
             $layerPath . '/composer.json',
             $this->resolveStub('composer'),
             [
-                '{{ name }}'          => self::USERS_LAYER_NAME,
-                '{{ namespace }}'     => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
-                '{{ providerClass }}' => 'UsersServiceProvider',
+                '{{ name }}'      => self::USERS_LAYER_NAME,
+                '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
             ],
         );
 
@@ -108,6 +107,11 @@ class StartCommand extends Command
                     $componentPath . '/UsersServiceProvider.php',
                     $this->resolveStub('service-provider'),
                     ['{{ namespace }}' => self::USERS_LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
+                );
+
+                $this->injectProviderInComposerJson(
+                    $layerPath . '/composer.json',
+                    self::USERS_LAYER_NAMESPACE . '\\Providers\\UsersServiceProvider',
                 );
             }
         }

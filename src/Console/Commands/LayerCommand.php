@@ -106,14 +106,13 @@ class LayerCommand extends Command
             $layerPath . '/composer.json',
             $this->resolveStub('composer'),
             [
-                '{{ name }}'          => $name,
-                '{{ namespace }}'     => str_replace('\\', '\\\\', $namespace),
-                '{{ providerClass }}' => $this->toServiceProviderClass($package),
+                '{{ name }}'      => $name,
+                '{{ namespace }}' => str_replace('\\', '\\\\', $namespace),
             ],
         );
 
         $generators = [
-            'src/Providers' => fn(string $path) => $this->generateServiceProvider($path, $namespace, $package),
+            'src/Providers' => fn(string $path) => $this->generateServiceProvider($path, $namespace, $package, $layerPath),
             'database/seeders' => fn() => $this->call('osdd:seeder', ['name' => $this->toSeederClass($package), '--layer' => $name]),
         ];
 
@@ -127,7 +126,7 @@ class LayerCommand extends Command
         $this->registerLayerInComposer($name, $layerPath);
     }
 
-    private function generateServiceProvider(string $path, string $namespace, string $package): void
+    private function generateServiceProvider(string $path, string $namespace, string $package, string $layerPath): void
     {
         $serviceProviderClass = $this->toServiceProviderClass($package);
 
@@ -140,6 +139,11 @@ class LayerCommand extends Command
                 '{{ class }}' => $serviceProviderClass,
                 '{{ seederClass }}' => $this->toSeederClass($package),
             ],
+        );
+
+        $this->injectProviderInComposerJson(
+            $layerPath . '/composer.json',
+            $namespace . '\\Providers\\' . $serviceProviderClass,
         );
     }
 

@@ -58,6 +58,19 @@ trait RegistersLayerInComposer
         }
     }
 
+    protected function injectProviderInComposerJson(string $composerPath, string $providerFqcn): void
+    {
+        $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
+
+        $composer['extra']['laravel']['providers'][] = $providerFqcn;
+        $composer['extra']['laravel']['providers'] = array_values(array_unique($composer['extra']['laravel']['providers']));
+
+        $this->files->put(
+            $composerPath,
+            json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL,
+        );
+    }
+
     private function normalizeComposerPsr4(array &$composer): void
     {
         foreach (['autoload', 'autoload-dev'] as $section) {
