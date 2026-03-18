@@ -8,7 +8,8 @@
     "autoload": {
         "psr-4": {
             "{{ namespace }}\\": "src/",
-            "{{ namespace }}\\Database\\": "database/"
+            "{{ namespace }}\\Database\\Seeders\\": "database/seeders/",
+            "{{ namespace }}\\Database\\Factories\\": "database/factories/"
         }
     },
     "minimum-stability": "stable",

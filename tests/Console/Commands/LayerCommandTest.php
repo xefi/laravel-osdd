@@ -41,23 +41,28 @@ class LayerCommandTest extends TestCase
         parent::tearDown();
     }
 
-    public function testItCreatesLayerWithAllComponents(): void
+    public function testItCreatesLayerWithAllGenerators(): void
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
-        foreach ($this->allComponents() as $component) {
-            $this->assertFilenameExists("functional/my-layer/{$component}");
-        }
+        $this->assertFilenameExists('functional/my-layer/database/migrations');
+        $this->assertFilenameExists('functional/my-layer/src/Models');
+        $this->assertFilenameExists('functional/my-layer/database/factories');
+        $this->assertFilenameExists('functional/my-layer/database/seeders');
+        $this->assertFilenameExists('functional/my-layer/src/Providers');
+        $this->assertFilenameExists('functional/my-layer/tests/Feature');
+        $this->assertFilenameExists('functional/my-layer/src/Http/Controllers');
+        $this->assertFilenameExists('functional/my-layer/src/Policies');
     }
 
     public function testItGeneratesNamedSeederForLayer(): void
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/database/seeders/MyLayerSeeder.php');
@@ -72,14 +77,15 @@ class LayerCommandTest extends TestCase
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFileContains([
             '"name": "functional/my-layer"',
             '"type": "layer"',
             '"Functional\\\\MyLayer\\\\": "src/"',
-            '"Functional\\\\MyLayer\\\\Database\\\\": "database/"',
+            '"Functional\\\\MyLayer\\\\Database\\\\Seeders\\\\": "database/seeders/"',
+            '"Functional\\\\MyLayer\\\\Database\\\\Factories\\\\": "database/factories/"',
             '"xefi/laravel-osdd": "*"',
             'Functional\\\\MyLayer\\\\Providers\\\\MyLayerServiceProvider',
         ], 'functional/my-layer/composer.json');
@@ -89,7 +95,7 @@ class LayerCommandTest extends TestCase
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFileContains([
@@ -100,29 +106,31 @@ class LayerCommandTest extends TestCase
         ], 'functional/my-layer/src/Providers/MyLayerServiceProvider.php');
     }
 
-    public function testItCreatesLayerWithSelectedComponents(): void
+    public function testItCreatesLayerWithSelectedGenerators(): void
     {
-        $selected = ['database/migrations', 'src/Models'];
+        $selected = ['migration', 'model'];
 
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $selected, $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $selected, $this->allGenerators())
             ->assertExitCode(0);
 
-        foreach ($selected as $component) {
-            $this->assertFilenameExists("functional/my-layer/{$component}");
-        }
+        $this->assertFilenameExists('functional/my-layer/database/migrations');
+        $this->assertFilenameExists('functional/my-layer/src/Models');
 
-        foreach (array_diff($this->allComponents(), $selected) as $component) {
-            $this->assertFilenameNotExists("functional/my-layer/{$component}");
-        }
+        $this->assertFilenameNotExists('functional/my-layer/database/factories');
+        $this->assertFilenameNotExists('functional/my-layer/database/seeders');
+        $this->assertFilenameNotExists('functional/my-layer/src/Providers');
+        $this->assertFilenameNotExists('functional/my-layer/tests/Feature');
+        $this->assertFilenameNotExists('functional/my-layer/src/Http/Controllers');
+        $this->assertFilenameNotExists('functional/my-layer/src/Policies');
     }
 
     public function testItSkipsPathPromptWhenOnlyOnePathIsConfigured(): void
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
@@ -135,7 +143,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Where should the layer be created?', 'functional')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
@@ -153,11 +161,12 @@ class LayerCommandTest extends TestCase
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-auth-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFileContains([
             '"Functional\\\\MyAuthLayer\\\\": "src/"',
+            '"Functional\\\\MyAuthLayer\\\\Database\\\\Seeders\\\\": "database/seeders/"',
         ], 'functional/my-auth-layer/composer.json');
 
         $this->assertFileContains([
@@ -170,7 +179,7 @@ class LayerCommandTest extends TestCase
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
@@ -186,7 +195,7 @@ class LayerCommandTest extends TestCase
     {
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
@@ -199,7 +208,7 @@ class LayerCommandTest extends TestCase
     {
         $run = fn() => $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $run();
@@ -217,22 +226,28 @@ class LayerCommandTest extends TestCase
 
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
-            ->expectsChoice('Which components should be scaffolded?', $this->allComponents(), $this->allComponents())
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
     }
 
-    private function allComponents(): array
+    private function allGenerators(): array
     {
         return [
-            'database/migrations',
-            'database/factories',
-            'database/seeders',
-            'src/Models',
-            'src/Factories',
-            'src/Policies',
-            'src/Providers',
+            'migration',
+            'model',
+            'factory',
+            'seeder',
+            'service-provider',
+            'test',
+            'controller',
+            'policy',
         ];
+    }
+
+    private function defaultGenerators(): array
+    {
+        return ['migration', 'model', 'service-provider', 'test'];
     }
 }

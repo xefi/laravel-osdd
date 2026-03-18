@@ -69,19 +69,31 @@ class StartCommand extends Command
 
     private function createUsersLayer(string $layerPath): void
     {
-        $this->callSilently('osdd:layer', [
-            'name'         => self::USERS_LAYER_NAME,
-            '--target-path' => dirname($layerPath),
-            '--components' => [
-                'database/migrations',
-                'database/factories',
-                'src/Models',
-                'src/Factories',
-                'src/Policies',
-                'src/Providers',
-            ],
+        // Create layer composer.json
+        $this->createFile($layerPath . '/composer.json', $this->resolveStub('composer'), [
+            '{{ name }}'      => self::USERS_LAYER_NAME,
+            '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
         ]);
 
+        // Create service provider from layer stub
+        $this->createFile(
+            $layerPath . '/src/Providers/UsersServiceProvider.php',
+            $this->resolveStub('service-provider'),
+            [
+                '{{ namespace }}'   => self::USERS_LAYER_NAMESPACE,
+                '{{ class }}'       => 'UsersServiceProvider',
+                '{{ seederClass }}' => 'UsersSeeder',
+            ],
+        );
+
+        $this->injectProviderInComposerJson(
+            $layerPath . '/composer.json',
+            self::USERS_LAYER_NAMESPACE . '\\Providers\\UsersServiceProvider',
+        );
+
+        $this->registerLayerInComposer(self::USERS_LAYER_NAME, $layerPath);
+
+        // Create start-specific files from stubs
         $this->createFile($layerPath . '/src/Models/User.php', $this->resolveStartStub('user-model'));
         $this->createFile($layerPath . '/database/factories/UserFactory.php', $this->resolveStartStub('user-factory'));
         $this->createFile($layerPath . '/database/seeders/UsersSeeder.php', $this->resolveStartStub('users-seeder'));

@@ -4,6 +4,8 @@ namespace Xefi\LaravelOSDD\Console\Commands\Make;
 
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'osdd:model')]
 class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
@@ -16,6 +18,61 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
      * @var string
      */
     protected $name = 'osdd:model';
+
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->resolveLayer();
+    }
+
+    public function handle(): bool|null
+    {
+        // Bypass ModelMakeCommand::handle()'s interactive "additional components" prompt
+        // by calling GeneratorCommand::handle() directly via grandparent scope binding.
+        $grandparentHandle = \Closure::bind(
+            fn() => parent::handle(),
+            $this,
+            \Illuminate\Foundation\Console\ModelMakeCommand::class
+        );
+
+        $result = $grandparentHandle();
+
+        if ($result === false && ! $this->option('force')) {
+            return false;
+        }
+
+        if ($this->option('all')) {
+            $this->input->setOption('factory', true);
+            $this->input->setOption('seed', true);
+            $this->input->setOption('migration', true);
+            $this->input->setOption('controller', true);
+            $this->input->setOption('policy', true);
+            $this->input->setOption('resource', true);
+        }
+
+        if ($this->option('factory')) {
+            $this->createFactory();
+        }
+
+        if ($this->option('migration')) {
+            $this->createMigration();
+        }
+
+        if ($this->option('seed')) {
+            $this->createSeeder();
+        }
+
+        if ($this->option('controller') || $this->option('resource') || $this->option('api')) {
+            $this->createController();
+        } elseif ($this->option('requests')) {
+            $this->createFormRequests();
+        }
+
+        if ($this->option('policy')) {
+            $this->createPolicy();
+        }
+
+        return null;
+    }
 
     protected function rootNamespace(): string
     {

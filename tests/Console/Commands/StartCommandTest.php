@@ -56,8 +56,6 @@ class StartCommandTest extends TestCase
         $this->assertDirectoryExists($this->projectPath . '/functional/users/database/factories');
         $this->assertFileExists($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
         $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Models');
-        $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Factories');
-        $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Policies');
     }
 
     public function testItCreatesTheUsersLayerComposerJson(): void
@@ -71,7 +69,8 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('"name": "functional/users"', $contents);
         $this->assertStringContainsString('"type": "layer"', $contents);
         $this->assertStringContainsString('"Functional\\\\Users\\\\": "src/"', $contents);
-        $this->assertStringContainsString('"Functional\\\\Users\\\\Database\\\\": "database/"', $contents);
+        $this->assertStringContainsString('"Functional\\\\Users\\\\Database\\\\Seeders\\\\": "database/seeders/"', $contents);
+        $this->assertStringContainsString('"Functional\\\\Users\\\\Database\\\\Factories\\\\": "database/factories/"', $contents);
         $this->assertStringContainsString('Functional\\\\Users\\\\Providers\\\\UsersServiceProvider', $contents);
     }
 
@@ -88,6 +87,7 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('namespace Functional\Users\Models;', $contents);
         $this->assertStringContainsString('class User extends Authenticatable', $contents);
         $this->assertStringContainsString('use Functional\Users\Database\Factories\UserFactory;', $contents);
+        $this->assertStringContainsString('#[UseFactory(UserFactory::class)]', $contents);
         $this->assertStringContainsString('#[Fillable([', $contents);
         $this->assertStringContainsString('#[Hidden([', $contents);
         $this->assertStringContainsString("'password' => 'hashed'", $contents);
