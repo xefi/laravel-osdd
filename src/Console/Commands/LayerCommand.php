@@ -16,6 +16,7 @@ use function Laravel\Prompts\text;
 class LayerCommand extends Command
 {
     use RegistersLayerInComposer;
+
     protected $signature = 'osdd:layer
         {name? : Layer name (vendor/package)}
         {--target-path= : Full path to the target directory (skips selection prompt)}
@@ -33,11 +34,6 @@ class LayerCommand extends Command
         'src/Providers',
     ];
 
-    /**
-     * The filesystem instance.
-     *
-     * @var \Illuminate\Filesystem\Filesystem
-     */
     protected $files;
 
     public function __construct(Filesystem $files)
@@ -49,8 +45,14 @@ class LayerCommand extends Command
 
     public function handle(): int
     {
-        $name = $this->argument('name') ?? $this->askForName();
-        $targetPath = $this->option('target-path') ?? $this->askForTargetPath();
+        if ($name = $this->argument('name')) {
+            $targetPath = $this->option('target-path') ?? $this->askForTargetPath();
+        } else {
+            [$vendor, $targetPath] = $this->askForVendorAndPath();
+            $package = $this->askForPackage();
+            $name = $vendor . '/' . $package;
+        }
+
         $components = $this->option('components') ?: $this->askForComponents();
 
         $this->generate($name, $targetPath, $components);
@@ -60,32 +62,37 @@ class LayerCommand extends Command
         return self::SUCCESS;
     }
 
-    private function askForName(): string
-    {
-        return text(
-            label: 'Layer name (vendor/package)',
-            placeholder: 'acme/my-layer',
-            required: true,
-            validate: fn(string $value) => preg_match('/^[a-z0-9-]+\/[a-z0-9-]+$/', $value)
-                ? null
-                : 'Name must follow the vendor/package format using lowercase letters, numbers and hyphens.',
-        );
-    }
-
-    private function askForTargetPath(): string
+    private function askForVendorAndPath(): array
     {
         $paths = config('osdd.layers.paths');
 
         if (count($paths) === 1) {
-            return reset($paths);
+            return [array_key_first($paths), reset($paths)];
         }
 
-        $chosen = select(
+        $key = select(
             label: 'Where should the layer be created?',
-            options: $paths,
+            options: array_keys($paths),
         );
 
-        return $paths[$chosen];
+        return [$key, $paths[$key]];
+    }
+
+    private function askForTargetPath(): string
+    {
+        return $this->askForVendorAndPath()[1];
+    }
+
+    private function askForPackage(): string
+    {
+        return text(
+            label: 'Layer name',
+            placeholder: 'my-layer',
+            required: true,
+            validate: fn(string $value) => preg_match('/^[a-z0-9-]+$/', $value)
+                ? null
+                : 'Name must use lowercase letters, numbers and hyphens.',
+        );
     }
 
     private function askForComponents(): array
@@ -115,7 +122,7 @@ class LayerCommand extends Command
         );
 
         $generators = [
-            'src/Providers' => fn(string $path) => $this->generateServiceProvider($path, $namespace, $package, $layerPath),
+            'src/Providers'    => fn(string $path) => $this->generateServiceProvider($path, $namespace, $package, $layerPath),
             'database/seeders' => fn() => $this->call('osdd:seeder', ['name' => $this->toSeederClass($package), '--layer' => $name]),
         ];
 
@@ -138,8 +145,8 @@ class LayerCommand extends Command
             $path . '/' . $serviceProviderClass . '.php',
             $this->resolveStub('service-provider'),
             [
-                '{{ namespace }}' => $namespace,
-                '{{ class }}' => $serviceProviderClass,
+                '{{ namespace }}'   => $namespace,
+                '{{ class }}'       => $serviceProviderClass,
                 '{{ seederClass }}' => $this->toSeederClass($package),
             ],
         );

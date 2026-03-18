@@ -7,7 +7,8 @@
     },
     "autoload": {
         "psr-4": {
-            "{{ namespace }}\\": "src/"
+            "{{ namespace }}\\": "src/",
+            "{{ namespace }}\\Database\\": "database/"
         }
     },
     "minimum-stability": "stable",
