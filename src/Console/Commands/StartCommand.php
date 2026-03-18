@@ -5,6 +5,7 @@ namespace Xefi\LaravelOSDD\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Process\Process;
 use Xefi\LaravelOSDD\Console\Concerns\RegistersLayerInComposer;
 
 #[AsCommand(name: 'osdd:start')]
@@ -15,8 +16,9 @@ class StartCommand extends Command
 
     protected $description = 'Prepare a fresh Laravel project for OSDD';
 
-    private const LAYER_NAME = 'functional/users';
-    private const LAYER_NAMESPACE = 'Functional\\Users';
+    private const USERS_LAYER_NAME = 'functional/users';
+    private const USERS_LAYER_NAMESPACE = 'Functional\\Users';
+    private const OSDD_LAYER_NAME = 'technical/osdd';
 
     /**
      * The filesystem instance.
@@ -32,18 +34,24 @@ class StartCommand extends Command
 
     public function handle(): int
     {
-        $layerPath = $this->resolveLayerBasePath() . '/users';
+        $usersLayerPath = $this->resolveLayerBasePath() . '/users';
+        $osddLayerPath = $this->resolveTechnicalBasePath() . '/osdd';
 
-        $this->createUsersLayer($layerPath);
-        $this->moveUserModel($layerPath);
-        $this->moveUserFactory($layerPath);
-        $this->moveUserMigrations($layerPath);
+        $this->createUsersLayer($usersLayerPath);
+        $this->moveUserModel($usersLayerPath);
+        $this->moveUserFactory($usersLayerPath);
+        $this->moveUserMigrations($usersLayerPath);
         $this->deleteDirectory('app');
         $this->deleteDirectory('database');
         $this->deleteDirectory('config');
-        $this->clearBootstrapProviders();
+        $this->cleanComposerAutoload();
+        $this->createOsddLayer($osddLayerPath);
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
+
+        if ($this->confirm('Run <options=bold>composer update</> now?')) {
+            $this->runComposerUpdate();
+        }
 
         return self::SUCCESS;
     }
@@ -53,6 +61,13 @@ class StartCommand extends Command
         $paths = config('osdd.layers.paths', []);
 
         return $paths['functional'] ?? $this->laravel->basePath('functional');
+    }
+
+    private function resolveTechnicalBasePath(): string
+    {
+        $paths = config('osdd.layers.paths', []);
+
+        return $paths['technical'] ?? $this->laravel->basePath('technical');
     }
 
     private function createUsersLayer(string $layerPath): void
@@ -71,8 +86,8 @@ class StartCommand extends Command
             $layerPath . '/composer.json',
             $this->resolveStub('composer'),
             [
-                '{{ name }}' => self::LAYER_NAME,
-                '{{ namespace }}' => str_replace('\\', '\\\\', self::LAYER_NAMESPACE),
+                '{{ name }}' => self::USERS_LAYER_NAME,
+                '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
             ],
         );
 
@@ -89,7 +104,7 @@ class StartCommand extends Command
                 $this->createFile(
                     $componentPath . '/UsersServiceProvider.php',
                     $this->resolveStub('service-provider'),
-                    ['{{ namespace }}' => self::LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
+                    ['{{ namespace }}' => self::USERS_LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
                 );
             }
         }
@@ -99,9 +114,9 @@ class StartCommand extends Command
             $this->resolveStub('users-seeder'),
         );
 
-        $this->registerLayerInComposer(self::LAYER_NAME, $layerPath);
+        $this->registerLayerInComposer(self::USERS_LAYER_NAME, $layerPath);
 
-        $this->components->info('Layer <options=bold>' . self::LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
+        $this->components->info('Layer <options=bold>' . self::USERS_LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
     }
 
     private function moveUserModel(string $layerPath): void
@@ -173,18 +188,70 @@ class StartCommand extends Command
         $this->components->info('Moved ' . count($migrations) . ' user migration(s) to layer.');
     }
 
-    private function clearBootstrapProviders(): void
+    private function cleanComposerAutoload(): void
+    {
+        $composerPath = $this->laravel->basePath('composer.json');
+
+        if (!$this->files->exists($composerPath)) {
+            $this->components->warn('No composer.json found, skipping autoload cleanup.');
+            return;
+        }
+
+        $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
+
+        foreach (['App\\', 'Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
+            unset($composer['autoload']['psr-4'][$key]);
+            unset($composer['autoload-dev']['psr-4'][$key]);
+        }
+
+        $this->files->put(
+            $composerPath,
+            json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL,
+        );
+
+        $this->components->info('Cleaned up legacy autoload entries from composer.json.');
+    }
+
+    private function createOsddLayer(string $layerPath): void
+    {
+        $this->createFile($layerPath . '/composer.json', $this->resolveStub('osdd-composer'));
+        $this->createFile($layerPath . '/config/osdd.php', $this->resolveStub('osdd-config'));
+        $this->createFile($layerPath . '/src/Providers/OsddServiceProvider.php', $this->resolveStub('osdd-service-provider'));
+
+        $this->registerLayerInComposer(self::OSDD_LAYER_NAME, $layerPath);
+        $this->injectOsddProvider();
+
+        $this->components->info('Layer <options=bold>' . self::OSDD_LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
+    }
+
+    private function injectOsddProvider(): void
     {
         $path = $this->laravel->basePath('bootstrap/providers.php');
 
         if (!$this->files->exists($path)) {
-            $this->components->warn('No bootstrap/providers.php found, skipping.');
+            $this->components->warn('No bootstrap/providers.php found, skipping provider injection.');
             return;
         }
 
-        $this->files->put($path, "<?php\n\nreturn [];\n");
+        $this->files->put($path, "<?php\n\nreturn [\n    Technical\\Osdd\\Providers\\OsddServiceProvider::class,\n];\n");
 
-        $this->components->info('Cleared bootstrap/providers.php.');
+        $this->components->info('Registered OsddServiceProvider in bootstrap/providers.php.');
+    }
+
+    private function runComposerUpdate(): void
+    {
+        $this->components->info('Running composer update...');
+
+        $process = new Process(
+            ['composer', 'update', self::USERS_LAYER_NAME, self::OSDD_LAYER_NAME],
+            $this->laravel->basePath(),
+        );
+        $process->setTimeout(null);
+        $process->run(fn ($type, $buffer) => $this->output->write($buffer));
+
+        if (!$process->isSuccessful()) {
+            $this->components->error('composer update failed. You may need to run it manually.');
+        }
     }
 
     private function deleteDirectory(string $dir): void

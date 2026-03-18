@@ -1,0 +1,22 @@
+{
+    "name": "technical/osdd",
+    "description": "OSDD technical configuration layer",
+    "type": "layer",
+    "require": {
+        "xefi/laravel-osdd": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Technical\\Osdd\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Technical\\Osdd\\Providers\\OsddServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
