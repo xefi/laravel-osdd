@@ -56,13 +56,11 @@ class ConfigMakeCommand extends \Illuminate\Foundation\Console\ConfigMakeCommand
             return;
         }
 
-        $updated = str_replace(
-            "    }\n\n    public function register()",
-            "        {$line}\n    }\n\n    public function register()",
-            $content,
-        );
+        $pattern = '/(\n[ \t]*\})(\s+)([ \t]*public\s+function\s+register\b)/';
+        $updated = preg_replace($pattern, "\n        {$line}$1$2$3", $content, 1);
 
         if ($updated === $content) {
+            $this->components->warn("Could not inject [overrideConfigFrom] for [{$configFile}] into [{$providerPath}]: unexpected formatting.");
             return;
         }
 
