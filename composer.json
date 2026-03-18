@@ -27,6 +27,13 @@
             "Xefi\\LaravelOSDD\\Tests\\": "tests/"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Xefi\\LaravelOSDD\\LaravelOSDDServiceProvider"
+            ]
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "scripts": {

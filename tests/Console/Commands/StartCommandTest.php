@@ -37,6 +37,9 @@ class StartCommandTest extends TestCase
         file_put_contents($this->projectPath . '/composer.json', json_encode(['require' => new \stdClass()], JSON_PRETTY_PRINT) . PHP_EOL);
         mkdir($this->projectPath . '/config', 0755, true);
         file_put_contents($this->projectPath . '/config/app.php', '<?php return [];');
+
+        mkdir($this->projectPath . '/bootstrap', 0755, true);
+        file_put_contents($this->projectPath . '/bootstrap/providers.php', "<?php\n\nreturn [\n    App\\Providers\\AppServiceProvider::class,\n];\n");
     }
 
     protected function tearDown(): void
@@ -51,12 +54,14 @@ class StartCommandTest extends TestCase
 
         $this->assertFileExists($this->projectPath . '/functional/users/composer.json');
         $this->assertFileExists($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
-        $this->assertFileExists($this->projectPath . '/functional/users/database/migrations/.gitkeep');
-        $this->assertFileExists($this->projectPath . '/functional/users/database/factories/.gitkeep');
+        $this->assertDirectoryExists($this->projectPath . '/functional/users/database/migrations');
+        $this->assertDirectoryExists($this->projectPath . '/functional/users/database/factories');
         $this->assertFileExists($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
-        $this->assertFileExists($this->projectPath . '/functional/users/src/Models/.gitkeep');
-        $this->assertFileExists($this->projectPath . '/functional/users/src/Factories/.gitkeep');
-        $this->assertFileExists($this->projectPath . '/functional/users/src/Policies/.gitkeep');
+        $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Models');
+        $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Factories');
+        $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Policies');
+        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/migrations/.gitkeep');
+        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/src/Models/.gitkeep');
     }
 
     public function testItCreatesTheUsersLayerComposerJson(): void
@@ -78,6 +83,8 @@ class StartCommandTest extends TestCase
 
         $this->assertStringContainsString('namespace Functional\Users\Database\Seeders;', $contents);
         $this->assertStringContainsString('class UsersSeeder extends Seeder', $contents);
+        $this->assertStringContainsString('use Functional\Users\Models\User;', $contents);
+        $this->assertStringContainsString('User::factory()->count(10)->create();', $contents);
     }
 
     public function testItCreatesTheUsersServiceProvider(): void
@@ -190,6 +197,24 @@ class StartCommandTest extends TestCase
         $this->artisan('osdd:start')->assertExitCode(0);
 
         $this->assertFileExists($custom . '/users/composer.json');
+    }
+
+    public function testItClearsBootstrapProviders(): void
+    {
+        $this->artisan('osdd:start')->assertExitCode(0);
+
+        $contents = file_get_contents($this->projectPath . '/bootstrap/providers.php');
+
+        $this->assertStringNotContainsString('AppServiceProvider', $contents);
+        $this->assertStringContainsString('return [];', $contents);
+    }
+
+    public function testItSkipsBootstrapProvidersGracefullyWhenMissing(): void
+    {
+        unlink($this->projectPath . '/bootstrap/providers.php');
+        rmdir($this->projectPath . '/bootstrap');
+
+        $this->artisan('osdd:start')->assertExitCode(0);
     }
 
     public function testItRegistersUsersLayerAsPathRepositoryInComposerJson(): void

@@ -41,6 +41,7 @@ class StartCommand extends Command
         $this->deleteDirectory('app');
         $this->deleteDirectory('database');
         $this->deleteDirectory('config');
+        $this->clearBootstrapProviders();
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
 
@@ -90,15 +91,13 @@ class StartCommand extends Command
                     $this->resolveStub('service-provider'),
                     ['{{ namespace }}' => self::LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
                 );
-            } else {
-                $this->files->put($componentPath . '/.gitkeep', '');
             }
         }
 
-        $this->call('osdd:seeder', [
-            'name' => 'UsersSeeder',
-            '--layer' => self::LAYER_NAME,
-        ]);
+        $this->createFile(
+            $layerPath . '/database/seeders/UsersSeeder.php',
+            $this->resolveStub('users-seeder'),
+        );
 
         $this->registerLayerInComposer(self::LAYER_NAME, $layerPath);
 
@@ -172,6 +171,20 @@ class StartCommand extends Command
         }
 
         $this->components->info('Moved ' . count($migrations) . ' user migration(s) to layer.');
+    }
+
+    private function clearBootstrapProviders(): void
+    {
+        $path = $this->laravel->basePath('bootstrap/providers.php');
+
+        if (!$this->files->exists($path)) {
+            $this->components->warn('No bootstrap/providers.php found, skipping.');
+            return;
+        }
+
+        $this->files->put($path, "<?php\n\nreturn [];\n");
+
+        $this->components->info('Cleared bootstrap/providers.php.');
     }
 
     private function deleteDirectory(string $dir): void
