@@ -10,6 +10,13 @@
             "{{ namespace }}\\": "src/"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "{{ namespace }}\\Providers\\{{ providerClass }}"
+            ]
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

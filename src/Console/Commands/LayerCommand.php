@@ -105,7 +105,11 @@ class LayerCommand extends Command
         $this->createFile(
             $layerPath . '/composer.json',
             $this->resolveStub('composer'),
-            ['{{ name }}' => $name, '{{ namespace }}' => str_replace('\\', '\\\\', $namespace)],
+            [
+                '{{ name }}'          => $name,
+                '{{ namespace }}'     => str_replace('\\', '\\\\', $namespace),
+                '{{ providerClass }}' => $this->toServiceProviderClass($package),
+            ],
         );
 
         $generators = [

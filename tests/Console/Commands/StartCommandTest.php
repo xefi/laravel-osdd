@@ -78,6 +78,7 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('"name": "functional/users"', $contents);
         $this->assertStringContainsString('"type": "layer"', $contents);
         $this->assertStringContainsString('"Functional\\\\Users\\\\": "src/"', $contents);
+        $this->assertStringContainsString('Functional\\\\Users\\\\Providers\\\\UsersServiceProvider', $contents);
     }
 
     public function testItGeneratesUsersSeederForUsersLayer(): void

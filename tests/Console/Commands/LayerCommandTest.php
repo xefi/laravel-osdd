@@ -79,6 +79,7 @@ class LayerCommandTest extends TestCase
             '"type": "layer"',
             '"Acme\\\\MyLayer\\\\": "src/"',
             '"xefi/laravel-osdd": "*"',
+            'Acme\\\\MyLayer\\\\Providers\\\\MyLayerServiceProvider',
         ], 'functional/my-layer/composer.json');
     }
 

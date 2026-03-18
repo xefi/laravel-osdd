@@ -19,6 +19,7 @@ trait RegistersLayerInComposer
 
         $this->addPathRepository($composer, $relativePath);
         $this->addRequireEntry($composer, $name);
+        $this->normalizeComposerPsr4($composer);
 
         $this->files->put(
             $composerPath,
@@ -54,6 +55,15 @@ trait RegistersLayerInComposer
     {
         if (!isset($composer['require'][$name])) {
             $composer['require'][$name] = '*';
+        }
+    }
+
+    private function normalizeComposerPsr4(array &$composer): void
+    {
+        foreach (['autoload', 'autoload-dev'] as $section) {
+            if (isset($composer[$section]['psr-4']) && empty($composer[$section]['psr-4'])) {
+                $composer[$section]['psr-4'] = new \stdClass();
+            }
         }
     }
 }

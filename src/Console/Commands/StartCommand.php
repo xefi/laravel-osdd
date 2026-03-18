@@ -88,8 +88,9 @@ class StartCommand extends Command
             $layerPath . '/composer.json',
             $this->resolveStub('composer'),
             [
-                '{{ name }}' => self::USERS_LAYER_NAME,
-                '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
+                '{{ name }}'          => self::USERS_LAYER_NAME,
+                '{{ namespace }}'     => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
+                '{{ providerClass }}' => 'UsersServiceProvider',
             ],
         );
 
@@ -205,6 +206,8 @@ class StartCommand extends Command
             unset($composer['autoload']['psr-4'][$key]);
             unset($composer['autoload-dev']['psr-4'][$key]);
         }
+
+        $this->normalizeComposerPsr4($composer);
 
         $this->files->put(
             $composerPath,
