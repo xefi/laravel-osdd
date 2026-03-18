@@ -135,14 +135,19 @@ class LayerCommand extends Command
         );
 
         $withFactory = in_array('factory', $generators);
+        $withModel   = in_array('model', $generators);
 
-        foreach ($generators as $generator) {
+        // When model is also generated, --factory on osdd:model handles factory creation.
+        // Remove it from the loop so we don't duplicate it.
+        $effectiveGenerators = ($withFactory && $withModel)
+            ? array_diff($generators, ['factory'])
+            : $generators;
+
+        foreach ($effectiveGenerators as $generator) {
             match ($generator) {
                 'migration'        => $this->call('osdd:migration', ['name' => "create_{$pluralSnake}_table", '--create' => $pluralSnake, '--layer' => $name]),
                 'model'            => $this->call('osdd:model', array_filter(['name' => $singular, '--layer' => $name, '--factory' => $withFactory ?: null])),
-                'factory'          => $withFactory && in_array('model', $generators)
-                                        ? null // already handled via --factory on osdd:model
-                                        : $this->call('osdd:factory', ['name' => "{$singular}Factory", '--layer' => $name]),
+                'factory'          => $this->call('osdd:factory', ['name' => "{$singular}Factory", '--layer' => $name]),
                 'seeder'           => $this->call('osdd:seeder', ['name' => "{$pascal}Seeder", '--layer' => $name]),
                 'service-provider' => $this->generateServiceProvider($layerPath . '/src/Providers', $namespace, $package, $layerPath),
                 'test'             => $this->call('osdd:test', ['name' => "{$pascal}Test", '--layer' => $name]),
