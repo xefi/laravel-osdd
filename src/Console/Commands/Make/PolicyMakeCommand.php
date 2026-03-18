@@ -27,6 +27,15 @@ class PolicyMakeCommand extends \Illuminate\Foundation\Console\PolicyMakeCommand
         return rtrim($rootNamespace, '\\') . '\\Policies';
     }
 
+    protected function getStub(): string
+    {
+        if ($this->option('model')) {
+            return parent::getStub();
+        }
+
+        return __DIR__ . '/../../stubs/make/policy.stub';
+    }
+
     protected function getPath($name): string
     {
         $layer = $this->resolveLayer();

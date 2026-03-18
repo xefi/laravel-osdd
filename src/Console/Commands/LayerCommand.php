@@ -6,8 +6,10 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Process\Process;
 use Xefi\LaravelOSDD\Console\Concerns\RegistersLayerInComposer;
 
+use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
@@ -35,7 +37,7 @@ class LayerCommand extends Command
         'policy',
     ];
 
-    private const DEFAULT_GENERATORS = ['migration', 'model', 'service-provider', 'test'];
+    private const DEFAULT_GENERATORS = ['migration', 'model', 'factory', 'service-provider', 'test'];
 
     protected $files;
 
@@ -61,6 +63,10 @@ class LayerCommand extends Command
         $this->generate($name, $targetPath, $generators);
 
         $this->components->info("Layer <options=bold>{$name}</> created at <options=bold>{$targetPath}</>.");
+
+        if (confirm('Run composer update now?', default: true)) {
+            $this->runComposerUpdate($name);
+        }
 
         return self::SUCCESS;
     }
@@ -128,11 +134,15 @@ class LayerCommand extends Command
             ],
         );
 
+        $withFactory = in_array('factory', $generators);
+
         foreach ($generators as $generator) {
             match ($generator) {
                 'migration'        => $this->call('osdd:migration', ['name' => "create_{$pluralSnake}_table", '--create' => $pluralSnake, '--layer' => $name]),
-                'model'            => $this->call('osdd:model', ['name' => $singular, '--layer' => $name]),
-                'factory'          => $this->call('osdd:factory', ['name' => "{$singular}Factory", '--layer' => $name]),
+                'model'            => $this->call('osdd:model', array_filter(['name' => $singular, '--layer' => $name, '--factory' => $withFactory ?: null])),
+                'factory'          => $withFactory && in_array('model', $generators)
+                                        ? null // already handled via --factory on osdd:model
+                                        : $this->call('osdd:factory', ['name' => "{$singular}Factory", '--layer' => $name]),
                 'seeder'           => $this->call('osdd:seeder', ['name' => "{$pascal}Seeder", '--layer' => $name]),
                 'service-provider' => $this->generateServiceProvider($layerPath . '/src/Providers', $namespace, $package, $layerPath),
                 'test'             => $this->call('osdd:test', ['name' => "{$pascal}Test", '--layer' => $name]),
@@ -195,5 +205,21 @@ class LayerCommand extends Command
     private function toSeederClass(string $package): string
     {
         return Str::pascal($package) . 'Seeder';
+    }
+
+    private function runComposerUpdate(string $name): void
+    {
+        $this->components->info('Running composer update...');
+
+        $process = new Process(
+            ['composer', 'update', $name],
+            $this->laravel->basePath(),
+        );
+        $process->setTimeout(null);
+        $process->run(fn ($type, $buffer) => $this->output->write($buffer));
+
+        if (!$process->isSuccessful()) {
+            $this->components->error('composer update failed. You may need to run it manually.');
+        }
     }
 }

@@ -24,6 +24,33 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
         $this->resolveLayer();
     }
 
+    protected function getStub(): string
+    {
+        if ($this->option('factory')) {
+            return __DIR__ . '/../../stubs/make/model.factory.stub';
+        }
+
+        return parent::getStub();
+    }
+
+    protected function buildClass($name): string
+    {
+        $stub = parent::buildClass($name);
+
+        if ($this->option('factory')) {
+            $rootNamespace = rtrim($this->resolveLayer()->manifest->rootNamespace(), '\\');
+            $modelClass    = class_basename($name);
+
+            $stub = str_replace(
+                ['{{ factoryNamespace }}', '{{ factoryClass }}'],
+                [$rootNamespace . '\\Database\\Factories', $modelClass . 'Factory'],
+                $stub,
+            );
+        }
+
+        return $stub;
+    }
+
     public function handle(): bool|null
     {
         // Bypass ModelMakeCommand::handle()'s interactive "additional components" prompt

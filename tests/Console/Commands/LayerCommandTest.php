@@ -46,6 +46,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/database/migrations');
@@ -63,6 +64,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/database/seeders/MyLayerSeeder.php');
@@ -78,6 +80,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileContains([
@@ -96,6 +99,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileContains([
@@ -113,6 +117,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $selected, $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/database/migrations');
@@ -131,6 +136,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
@@ -144,6 +150,7 @@ class LayerCommandTest extends TestCase
             ->expectsQuestion('Where should the layer be created?', 'functional')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
@@ -162,6 +169,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-auth-layer')
             ->expectsChoice('Which generators should be run?', $this->allGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileContains([
@@ -180,6 +188,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
@@ -196,6 +205,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
@@ -209,6 +219,7 @@ class LayerCommandTest extends TestCase
         $run = fn() => $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $run();
@@ -227,6 +238,7 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'my-layer')
             ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFilenameExists('functional/my-layer/composer.json');
@@ -248,6 +260,6 @@ class LayerCommandTest extends TestCase
 
     private function defaultGenerators(): array
     {
-        return ['migration', 'model', 'service-provider', 'test'];
+        return ['migration', 'model', 'factory', 'service-provider', 'test'];
     }
 }

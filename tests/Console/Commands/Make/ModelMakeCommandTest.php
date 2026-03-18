@@ -80,6 +80,31 @@ class ModelMakeCommandTest extends TestCase
         $this->assertFilenameExists('functional/test-layer/database/factories/UserFactory.php');
     }
 
+    public function testItAddsHasFactoryAndUseFactoryAttributeWhenFactoryIsGenerated(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--factory' => true])
+            ->assertExitCode(0);
+
+        $this->assertFileContains([
+            'use Functional\TestLayer\Database\Factories\UserFactory;',
+            'use Illuminate\Database\Eloquent\Attributes\UseFactory;',
+            'use Illuminate\Database\Eloquent\Factories\HasFactory;',
+            '#[UseFactory(UserFactory::class)]',
+            'use HasFactory;',
+        ], 'functional/test-layer/src/Models/User.php');
+    }
+
+    public function testItDoesNotAddHasFactoryWhenNoFactoryIsGenerated(): void
+    {
+        $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer'])
+            ->assertExitCode(0);
+
+        $contents = $this->app['files']->get($this->app->basePath('functional/test-layer/src/Models/User.php'));
+
+        $this->assertStringNotContainsString('HasFactory', $contents);
+        $this->assertStringNotContainsString('UseFactory', $contents);
+    }
+
     public function testItGeneratesControllerAlongsideModel(): void
     {
         $this->artisan('osdd:model', ['name' => 'User', '--layer' => 'functional/test-layer', '--controller' => true, '--resource' => true])
