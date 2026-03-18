@@ -194,7 +194,7 @@ class StartCommandTest extends TestCase
         $this->assertFileExists($custom . '/users/composer.json');
     }
 
-    public function testItInjectsOsddServiceProviderInBootstrapProviders(): void
+    public function testItResetsBootstrapProvidersToEmptyArray(): void
     {
         $this->artisan('osdd:start')
             ->expectsConfirmation('Run composer update now?', 'no')
@@ -203,8 +203,8 @@ class StartCommandTest extends TestCase
         $contents = file_get_contents($this->projectPath . '/bootstrap/providers.php');
 
         $this->assertStringNotContainsString('AppServiceProvider', $contents);
-        $this->assertStringContainsString('OsddServiceProvider::class', $contents);
-        $this->assertStringContainsString('Technical\\Osdd\\Providers\\OsddServiceProvider', $contents);
+        $this->assertStringNotContainsString('OsddServiceProvider', $contents);
+        $this->assertStringContainsString('return [', $contents);
     }
 
     public function testItSkipsBootstrapProvidersGracefullyWhenMissing(): void

@@ -126,9 +126,7 @@ class StartCommand extends Command
             return;
         }
 
-        $this->files->put($path, "<?php\n\nreturn [\n    Technical\\Osdd\\Providers\\OsddServiceProvider::class,\n];\n");
-
-        $this->components->info('Registered OsddServiceProvider in bootstrap/providers.php.');
+        $this->files->put($path, "<?php\n\nreturn [\n];\n");
     }
 
     private function cleanComposerAutoload(): void
