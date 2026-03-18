@@ -26,14 +26,9 @@ class StartCommandTest extends TestCase
     {
         parent::setUp();
 
-        mkdir($this->projectPath . '/app/Models', 0755, true);
-        file_put_contents($this->projectPath . '/app/Models/User.php', $this->fakeUserModel());
-
-        mkdir($this->projectPath . '/database/factories', 0755, true);
-        file_put_contents($this->projectPath . '/database/factories/UserFactory.php', $this->fakeUserFactory());
-
+        mkdir($this->projectPath . '/app', 0755, true);
         mkdir($this->projectPath . '/database/migrations', 0755, true);
-        file_put_contents($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php', $this->fakeUserMigration());
+        mkdir($this->projectPath . '/database/factories', 0755, true);
 
         file_put_contents($this->projectPath . '/composer.json', json_encode($this->fakeComposer(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
         mkdir($this->projectPath . '/config', 0755, true);
@@ -63,8 +58,6 @@ class StartCommandTest extends TestCase
         $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Models');
         $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Factories');
         $this->assertDirectoryExists($this->projectPath . '/functional/users/src/Policies');
-        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/migrations/.gitkeep');
-        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/src/Models/.gitkeep');
     }
 
     public function testItCreatesTheUsersLayerComposerJson(): void
@@ -81,35 +74,7 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('Functional\\\\Users\\\\Providers\\\\UsersServiceProvider', $contents);
     }
 
-    public function testItGeneratesUsersSeederForUsersLayer(): void
-    {
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $contents = file_get_contents($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
-
-        $this->assertStringContainsString('namespace Functional\Users\Database\Seeders;', $contents);
-        $this->assertStringContainsString('class UsersSeeder extends Seeder', $contents);
-        $this->assertStringContainsString('use Functional\Users\Models\User;', $contents);
-        $this->assertStringContainsString('User::factory()->count(10)->create();', $contents);
-    }
-
-    public function testItCreatesTheUsersServiceProvider(): void
-    {
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
-
-        $this->assertStringContainsString('namespace Functional\Users\Providers;', $contents);
-        $this->assertStringContainsString('class UsersServiceProvider extends LayerServiceProvider', $contents);
-        $this->assertStringContainsString("loadMigrationsFrom(__DIR__ . '/../../database/migrations')", $contents);
-        $this->assertStringContainsString('loadSeeders([UsersSeeder::class])', $contents);
-    }
-
-    public function testItMovesTheUserModelWithCorrectNamespace(): void
+    public function testItCreatesUserModelFromStub(): void
     {
         $this->artisan('osdd:start')
             ->expectsConfirmation('Run composer update now?', 'no')
@@ -121,20 +86,13 @@ class StartCommandTest extends TestCase
 
         $this->assertStringContainsString('namespace Functional\Users\Models;', $contents);
         $this->assertStringContainsString('class User extends Authenticatable', $contents);
+        $this->assertStringContainsString('use Functional\Users\Database\Factories\UserFactory;', $contents);
+        $this->assertStringContainsString('#[Fillable([', $contents);
+        $this->assertStringContainsString('#[Hidden([', $contents);
+        $this->assertStringContainsString("'password' => 'hashed'", $contents);
     }
 
-    public function testItUpdatesTheUserModelHasFactoryDocblock(): void
-    {
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $contents = file_get_contents($this->projectPath . '/functional/users/src/Models/User.php');
-
-        $this->assertStringContainsString('@use HasFactory<\Functional\Users\Database\Factories\UserFactory>', $contents);
-    }
-
-    public function testItMovesTheUserFactoryWithCorrectNamespace(): void
+    public function testItCreatesUserFactoryFromStub(): void
     {
         $this->artisan('osdd:start')
             ->expectsConfirmation('Run composer update now?', 'no')
@@ -149,14 +107,48 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('class UserFactory extends Factory', $contents);
     }
 
-    public function testItMovesUserMigrationsToLayer(): void
+    public function testItGeneratesUsersSeederForUsersLayer(): void
     {
         $this->artisan('osdd:start')
             ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
-        $this->assertFileExists($this->projectPath . '/functional/users/database/migrations/0001_01_01_000000_create_users_table.php');
-        $this->assertFileDoesNotExist($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php');
+        $contents = file_get_contents($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
+
+        $this->assertStringContainsString('namespace Functional\Users\Database\Seeders;', $contents);
+        $this->assertStringContainsString('class UsersSeeder extends Seeder', $contents);
+        $this->assertStringContainsString('use Functional\Users\Models\User;', $contents);
+        $this->assertStringContainsString('User::factory()->count(10)->create();', $contents);
+    }
+
+    public function testItCreatesUserMigrationFromStub(): void
+    {
+        $this->artisan('osdd:start')
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $migrations = glob($this->projectPath . '/functional/users/database/migrations/*_create_users_table.php');
+
+        $this->assertNotEmpty($migrations);
+
+        $contents = file_get_contents($migrations[0]);
+
+        $this->assertStringContainsString("Schema::create('users'", $contents);
+        $this->assertStringContainsString('$table->string(\'email\')', $contents);
+    }
+
+    public function testItCreatesTheUsersServiceProvider(): void
+    {
+        $this->artisan('osdd:start')
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
+
+        $this->assertStringContainsString('namespace Functional\Users\Providers;', $contents);
+        $this->assertStringContainsString('class UsersServiceProvider extends LayerServiceProvider', $contents);
+        $this->assertStringContainsString("loadMigrationsFrom(__DIR__ . '/../../database/migrations')", $contents);
+        $this->assertStringContainsString('loadSeeders([UsersSeeder::class])', $contents);
     }
 
     public function testItDeletesTheAppDirectory(): void
@@ -184,39 +176,6 @@ class StartCommandTest extends TestCase
             ->assertExitCode(0);
 
         $this->assertDirectoryDoesNotExist($this->projectPath . '/config');
-    }
-
-    public function testItSkipsUserModelGracefullyWhenMissing(): void
-    {
-        unlink($this->projectPath . '/app/Models/User.php');
-
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/src/Models/User.php');
-    }
-
-    public function testItSkipsUserFactoryGracefullyWhenMissing(): void
-    {
-        unlink($this->projectPath . '/database/factories/UserFactory.php');
-
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/factories/UserFactory.php');
-    }
-
-    public function testItSkipsUserMigrationsGracefullyWhenMissing(): void
-    {
-        unlink($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php');
-
-        $this->artisan('osdd:start')
-            ->expectsConfirmation('Run composer update now?', 'no')
-            ->assertExitCode(0);
-
-        $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/migrations/0001_01_01_000000_create_users_table.php');
     }
 
     public function testItUsesTheConfiguredFunctionalPath(): void
@@ -381,73 +340,5 @@ class StartCommandTest extends TestCase
                 ],
             ],
         ];
-    }
-
-    private function fakeUserModel(): string
-    {
-        return <<<'PHP'
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-
-class User extends Authenticatable
-{
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
-}
-PHP;
-    }
-
-    private function fakeUserFactory(): string
-    {
-        return <<<'PHP'
-<?php
-
-namespace Database\Factories;
-
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class UserFactory extends Factory
-{
-    protected $model = User::class;
-
-    public function definition(): array
-    {
-        return ['name' => fake()->name()];
-    }
-}
-PHP;
-    }
-
-    private function fakeUserMigration(): string
-    {
-        return <<<'PHP'
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('users');
-    }
-};
-PHP;
     }
 }

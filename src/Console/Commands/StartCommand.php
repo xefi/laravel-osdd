@@ -14,6 +14,7 @@ use function Laravel\Prompts\confirm;
 class StartCommand extends Command
 {
     use RegistersLayerInComposer;
+
     protected $name = 'osdd:start';
 
     protected $description = 'Prepare a fresh Laravel project for OSDD';
@@ -22,9 +23,6 @@ class StartCommand extends Command
     private const USERS_LAYER_NAMESPACE = 'Functional\\Users';
     private const OSDD_LAYER_NAME = 'technical/osdd';
 
-    /**
-     * The filesystem instance.
-     */
     protected Filesystem $files;
 
     public function __construct(Filesystem $files)
@@ -37,17 +35,14 @@ class StartCommand extends Command
     public function handle(): int
     {
         $usersLayerPath = $this->resolveLayerBasePath() . '/users';
-        $osddLayerPath = $this->resolveTechnicalBasePath() . '/osdd';
+        $osddLayerPath  = $this->resolveTechnicalBasePath() . '/osdd';
 
         $this->createUsersLayer($usersLayerPath);
-        $this->moveUserModel($usersLayerPath);
-        $this->moveUserFactory($usersLayerPath);
-        $this->moveUserMigrations($usersLayerPath);
+        $this->createOsddLayer($osddLayerPath);
         $this->deleteDirectory('app');
         $this->deleteDirectory('database');
         $this->deleteDirectory('config');
         $this->cleanComposerAutoload();
-        $this->createOsddLayer($osddLayerPath);
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
 
@@ -74,151 +69,28 @@ class StartCommand extends Command
 
     private function createUsersLayer(string $layerPath): void
     {
-        $components = [
-            'database/migrations',
-            'database/factories',
-            'database/seeders',
-            'src/Models',
-            'src/Factories',
-            'src/Policies',
-            'src/Providers',
-        ];
-
-        $this->createFile(
-            $layerPath . '/composer.json',
-            $this->resolveStub('composer'),
-            [
-                '{{ name }}'      => self::USERS_LAYER_NAME,
-                '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
+        $this->callSilently('osdd:layer', [
+            'name'         => self::USERS_LAYER_NAME,
+            '--target-path' => dirname($layerPath),
+            '--components' => [
+                'database/migrations',
+                'database/factories',
+                'src/Models',
+                'src/Factories',
+                'src/Policies',
+                'src/Providers',
             ],
-        );
+        ]);
 
-        foreach ($components as $component) {
-            if ($component === 'database/seeders') {
-                continue;
-            }
-
-            $componentPath = $layerPath . '/' . $component;
-
-            $this->files->makeDirectory($componentPath, 0755, true, true);
-
-            if ($component === 'src/Providers') {
-                $this->createFile(
-                    $componentPath . '/UsersServiceProvider.php',
-                    $this->resolveStub('service-provider'),
-                    ['{{ namespace }}' => self::USERS_LAYER_NAMESPACE, '{{ class }}' => 'UsersServiceProvider', '{{ seederClass }}' => 'UsersSeeder'],
-                );
-
-                $this->injectProviderInComposerJson(
-                    $layerPath . '/composer.json',
-                    self::USERS_LAYER_NAMESPACE . '\\Providers\\UsersServiceProvider',
-                );
-            }
-        }
-
+        $this->createFile($layerPath . '/src/Models/User.php', $this->resolveStartStub('user-model'));
+        $this->createFile($layerPath . '/database/factories/UserFactory.php', $this->resolveStartStub('user-factory'));
+        $this->createFile($layerPath . '/database/seeders/UsersSeeder.php', $this->resolveStartStub('users-seeder'));
         $this->createFile(
-            $layerPath . '/database/seeders/UsersSeeder.php',
-            $this->resolveStub('users-seeder'),
+            $layerPath . '/database/migrations/' . date('Y_m_d_His') . '_create_users_table.php',
+            $this->resolveStartStub('create-users-table'),
         );
-
-        $this->registerLayerInComposer(self::USERS_LAYER_NAME, $layerPath);
 
         $this->components->info('Layer <options=bold>' . self::USERS_LAYER_NAME . '</> created at <options=bold>' . $layerPath . '</>.');
-    }
-
-    private function moveUserModel(string $layerPath): void
-    {
-        $source = $this->laravel->basePath('app/Models/User.php');
-
-        if (!$this->files->isFile($source)) {
-            $this->components->warn('No User model found at app/Models/User.php, skipping.');
-            return;
-        }
-
-        $contents = str_replace(
-            [
-                'namespace App\\Models;',
-                '@use HasFactory<\\Database\\Factories\\UserFactory>',
-            ],
-            [
-                'namespace Functional\\Users\\Models;',
-                '@use HasFactory<\\Functional\\Users\\Database\\Factories\\UserFactory>',
-            ],
-            $this->files->get($source),
-        );
-
-        $this->files->put($layerPath . '/src/Models/User.php', $contents);
-
-        $this->components->info('Moved User model to layer.');
-    }
-
-    private function moveUserFactory(string $layerPath): void
-    {
-        $source = $this->laravel->basePath('database/factories/UserFactory.php');
-
-        if (!$this->files->isFile($source)) {
-            $this->components->warn('No UserFactory found at database/factories/UserFactory.php, skipping.');
-            return;
-        }
-
-        $contents = str_replace(
-            [
-                'namespace Database\\Factories;',
-                'use App\\Models\\User;',
-            ],
-            [
-                'namespace Functional\\Users\\Database\\Factories;',
-                'use Functional\\Users\\Models\\User;',
-            ],
-            $this->files->get($source),
-        );
-
-        $this->files->put($layerPath . '/database/factories/UserFactory.php', $contents);
-
-        $this->components->info('Moved UserFactory to layer.');
-    }
-
-    private function moveUserMigrations(string $layerPath): void
-    {
-        $migrationsPath = $this->laravel->basePath('database/migrations');
-        $migrations = $this->files->glob($migrationsPath . '/*_create_users_table.php') ?: [];
-
-        if (empty($migrations)) {
-            $this->components->warn('No user migrations found, skipping.');
-            return;
-        }
-
-        foreach ($migrations as $migration) {
-            $this->files->move($migration, $layerPath . '/database/migrations/' . basename($migration));
-        }
-
-        $this->components->info('Moved ' . count($migrations) . ' user migration(s) to layer.');
-    }
-
-    private function cleanComposerAutoload(): void
-    {
-        $composerPath = $this->laravel->basePath('composer.json');
-
-        if (!$this->files->exists($composerPath)) {
-            $this->components->warn('No composer.json found, skipping autoload cleanup.');
-            return;
-        }
-
-        $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
-
-        foreach (['App\\', 'Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
-            unset($composer['autoload']['psr-4'][$key]);
-            unset($composer['autoload-dev']['psr-4'][$key]);
-        }
-
-        $this->normalizeComposerPsr4($composer);
-
-        $this->files->put(
-            $composerPath,
-            json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL,
-        );
-
-        $this->components->info('Cleaned up legacy autoload entries from composer.json.');
     }
 
     private function createOsddLayer(string $layerPath): void
@@ -247,20 +119,30 @@ class StartCommand extends Command
         $this->components->info('Registered OsddServiceProvider in bootstrap/providers.php.');
     }
 
-    private function runComposerUpdate(): void
+    private function cleanComposerAutoload(): void
     {
-        $this->components->info('Running composer update...');
+        $composerPath = $this->laravel->basePath('composer.json');
 
-        $process = new Process(
-            ['composer', 'update', self::USERS_LAYER_NAME, self::OSDD_LAYER_NAME],
-            $this->laravel->basePath(),
-        );
-        $process->setTimeout(null);
-        $process->run(fn ($type, $buffer) => $this->output->write($buffer));
-
-        if (!$process->isSuccessful()) {
-            $this->components->error('composer update failed. You may need to run it manually.');
+        if (!$this->files->exists($composerPath)) {
+            $this->components->warn('No composer.json found, skipping autoload cleanup.');
+            return;
         }
+
+        $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
+
+        foreach (['App\\', 'Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
+            unset($composer['autoload']['psr-4'][$key]);
+            unset($composer['autoload-dev']['psr-4'][$key]);
+        }
+
+        $this->normalizeComposerPsr4($composer);
+
+        $this->files->put(
+            $composerPath,
+            json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL,
+        );
+
+        $this->components->info('Cleaned up legacy autoload entries from composer.json.');
     }
 
     private function deleteDirectory(string $dir): void
@@ -280,6 +162,22 @@ class StartCommand extends Command
         $this->components->info("Deleted {$dir}/ directory.");
     }
 
+    private function runComposerUpdate(): void
+    {
+        $this->components->info('Running composer update...');
+
+        $process = new Process(
+            ['composer', 'update', self::USERS_LAYER_NAME, self::OSDD_LAYER_NAME],
+            $this->laravel->basePath(),
+        );
+        $process->setTimeout(null);
+        $process->run(fn ($type, $buffer) => $this->output->write($buffer));
+
+        if (!$process->isSuccessful()) {
+            $this->components->error('composer update failed. You may need to run it manually.');
+        }
+    }
+
     private function createFile(string $path, string $contents, array $replacements = []): void
     {
         $directory = dirname($path);
@@ -294,5 +192,10 @@ class StartCommand extends Command
     private function resolveStub(string $stub): string
     {
         return $this->files->get(__DIR__ . '/../stubs/layer/' . $stub . '.stub');
+    }
+
+    private function resolveStartStub(string $stub): string
+    {
+        return $this->files->get(__DIR__ . '/../stubs/start/' . $stub . '.stub');
     }
 }

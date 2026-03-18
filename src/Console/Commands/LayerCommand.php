@@ -16,7 +16,10 @@ use function Laravel\Prompts\text;
 class LayerCommand extends Command
 {
     use RegistersLayerInComposer;
-    protected $name = 'osdd:layer';
+    protected $signature = 'osdd:layer
+        {name? : Layer name (vendor/package)}
+        {--target-path= : Full path to the target directory (skips selection prompt)}
+        {--components=* : Components to scaffold (skips selection prompt)}';
 
     protected $description = 'Create a new OSDD layer';
 
@@ -46,9 +49,9 @@ class LayerCommand extends Command
 
     public function handle(): int
     {
-        $name = $this->askForName();
-        $targetPath = $this->askForTargetPath();
-        $components = $this->askForComponents();
+        $name = $this->argument('name') ?? $this->askForName();
+        $targetPath = $this->option('target-path') ?? $this->askForTargetPath();
+        $components = $this->option('components') ?: $this->askForComponents();
 
         $this->generate($name, $targetPath, $components);
 
@@ -150,7 +153,6 @@ class LayerCommand extends Command
     private function generateDirectory(string $path): void
     {
         $this->files->makeDirectory($path, 0755, true, true);
-        $this->files->put($path . '/.gitkeep', '');
     }
 
     private function createFile(string $path, string $contents, array $replacements = []): void
