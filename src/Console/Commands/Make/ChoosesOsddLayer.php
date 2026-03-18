@@ -42,6 +42,15 @@ trait ChoosesOsddLayer
         return $this->resolvedLayer = $layers->first(fn(Layer $l) => $l->manifest->name() === $chosen);
     }
 
+    protected function interact(
+        \Symfony\Component\Console\Input\InputInterface $input,
+        \Symfony\Component\Console\Output\OutputInterface $output,
+    ): void {
+        $this->resolveLayer();
+
+        parent::interact($input, $output);
+    }
+
     protected function getOptions(): array
     {
         return array_merge(parent::getOptions(), [
