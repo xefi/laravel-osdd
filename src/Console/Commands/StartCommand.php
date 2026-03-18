@@ -36,9 +36,9 @@ class StartCommand extends Command
         $this->moveUserModel($layerPath);
         $this->moveUserFactory($layerPath);
         $this->moveUserMigrations($layerPath);
-        $this->deleteAppDirectory();
-        $this->deleteDatabaseDirectory();
-        $this->deleteConfigDirectory();
+        $this->deleteDirectory('app');
+        $this->deleteDirectory('database');
+        $this->deleteDirectory('config');
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
 
@@ -170,46 +170,18 @@ class StartCommand extends Command
         $this->components->info('Moved ' . count($migrations) . ' user migration(s) to layer.');
     }
 
-    private function deleteAppDirectory(): void
+    private function deleteDirectory(string $dir): void
     {
-        $appPath = $this->laravel->basePath('app');
-
-        if (!$this->files->isDirectory($appPath)) {
-            $this->components->warn('No app/ directory found, skipping.');
-            return;
-        }
-
-        $this->files->deleteDirectory($appPath);
-
-        $this->components->info('Deleted app/ directory.');
-    }
-
-    private function deleteDatabaseDirectory(): void
-    {
-        $path = $this->laravel->basePath('database');
+        $path = $this->laravel->basePath($dir);
 
         if (!$this->files->isDirectory($path)) {
-            $this->components->warn('No database/ directory found, skipping.');
+            $this->components->warn("No {$dir}/ directory found, skipping.");
             return;
         }
 
         $this->files->deleteDirectory($path);
 
-        $this->components->info('Deleted database/ directory.');
-    }
-
-    private function deleteConfigDirectory(): void
-    {
-        $path = $this->laravel->basePath('config');
-
-        if (!$this->files->isDirectory($path)) {
-            $this->components->warn('No config/ directory found, skipping.');
-            return;
-        }
-
-        $this->files->deleteDirectory($path);
-
-        $this->components->info('Deleted config/ directory.');
+        $this->components->info("Deleted {$dir}/ directory.");
     }
 
     private function createFile(string $path, string $contents, array $replacements = []): void
