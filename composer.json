@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "laravel/framework": "^12",
+        "laravel/framework": "^12 || ^13",
         "php": "^8.3",
         "ext-dom": "*"
     },
