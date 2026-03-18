@@ -52,7 +52,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheUsersLayer(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($this->projectPath . '/functional/users/composer.json');
@@ -70,7 +70,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheUsersLayerComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/functional/users/composer.json');
@@ -83,7 +83,7 @@ class StartCommandTest extends TestCase
     public function testItGeneratesUsersSeederForUsersLayer(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/functional/users/database/seeders/UsersSeeder.php');
@@ -97,7 +97,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheUsersServiceProvider(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
@@ -111,7 +111,7 @@ class StartCommandTest extends TestCase
     public function testItMovesTheUserModelWithCorrectNamespace(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($this->projectPath . '/functional/users/src/Models/User.php');
@@ -125,7 +125,7 @@ class StartCommandTest extends TestCase
     public function testItUpdatesTheUserModelHasFactoryDocblock(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/functional/users/src/Models/User.php');
@@ -136,7 +136,7 @@ class StartCommandTest extends TestCase
     public function testItMovesTheUserFactoryWithCorrectNamespace(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($this->projectPath . '/functional/users/database/factories/UserFactory.php');
@@ -151,7 +151,7 @@ class StartCommandTest extends TestCase
     public function testItMovesUserMigrationsToLayer(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($this->projectPath . '/functional/users/database/migrations/0001_01_01_000000_create_users_table.php');
@@ -161,7 +161,7 @@ class StartCommandTest extends TestCase
     public function testItDeletesTheAppDirectory(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertDirectoryDoesNotExist($this->projectPath . '/app');
@@ -170,7 +170,7 @@ class StartCommandTest extends TestCase
     public function testItDeletesTheDatabaseDirectory(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertDirectoryDoesNotExist($this->projectPath . '/database');
@@ -179,7 +179,7 @@ class StartCommandTest extends TestCase
     public function testItDeletesTheConfigDirectory(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertDirectoryDoesNotExist($this->projectPath . '/config');
@@ -190,7 +190,7 @@ class StartCommandTest extends TestCase
         unlink($this->projectPath . '/app/Models/User.php');
 
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileDoesNotExist($this->projectPath . '/functional/users/src/Models/User.php');
@@ -201,7 +201,7 @@ class StartCommandTest extends TestCase
         unlink($this->projectPath . '/database/factories/UserFactory.php');
 
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/factories/UserFactory.php');
@@ -212,7 +212,7 @@ class StartCommandTest extends TestCase
         unlink($this->projectPath . '/database/migrations/0001_01_01_000000_create_users_table.php');
 
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileDoesNotExist($this->projectPath . '/functional/users/database/migrations/0001_01_01_000000_create_users_table.php');
@@ -227,7 +227,7 @@ class StartCommandTest extends TestCase
         ]);
 
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($custom . '/users/composer.json');
@@ -236,7 +236,7 @@ class StartCommandTest extends TestCase
     public function testItInjectsOsddServiceProviderInBootstrapProviders(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/bootstrap/providers.php');
@@ -252,14 +252,14 @@ class StartCommandTest extends TestCase
         rmdir($this->projectPath . '/bootstrap');
 
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
     }
 
     public function testItRegistersUsersLayerAsPathRepositoryInComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
@@ -274,7 +274,7 @@ class StartCommandTest extends TestCase
     public function testItAddsUsersLayerToRequireInComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
@@ -286,7 +286,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheOsddLayer(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $this->assertFileExists($this->projectPath . '/technical/osdd/composer.json');
@@ -297,7 +297,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheOsddLayerComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/technical/osdd/composer.json');
@@ -311,7 +311,7 @@ class StartCommandTest extends TestCase
     public function testItCreatesTheOsddServiceProvider(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $contents = file_get_contents($this->projectPath . '/technical/osdd/src/Providers/OsddServiceProvider.php');
@@ -324,7 +324,7 @@ class StartCommandTest extends TestCase
     public function testItRegistersOsddLayerAsPathRepositoryInComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
@@ -336,7 +336,7 @@ class StartCommandTest extends TestCase
     public function testItAddsOsddLayerToRequireInComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
@@ -348,7 +348,7 @@ class StartCommandTest extends TestCase
     public function testItCleansLegacyAutoloadFromComposerJson(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
 
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
@@ -362,7 +362,7 @@ class StartCommandTest extends TestCase
     public function testItAsksForComposerUpdateConfirmation(): void
     {
         $this->artisan('osdd:start')
-            ->expectsConfirmation('Run <options=bold>composer update</> now?', 'no')
+            ->expectsConfirmation('Run composer update now?', 'no')
             ->assertExitCode(0);
     }
 

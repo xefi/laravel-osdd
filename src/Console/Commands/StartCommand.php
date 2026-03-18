@@ -8,6 +8,8 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Process\Process;
 use Xefi\LaravelOSDD\Console\Concerns\RegistersLayerInComposer;
 
+use function Laravel\Prompts\confirm;
+
 #[AsCommand(name: 'osdd:start')]
 class StartCommand extends Command
 {
@@ -49,7 +51,7 @@ class StartCommand extends Command
 
         $this->components->info('Congratulations! Your project is ready for OSDD. Create your first layer with <options=bold>php artisan osdd:layer</>.');
 
-        if ($this->confirm('Run <options=bold>composer update</> now?')) {
+        if (confirm('Run composer update now?', default: true)) {
             $this->runComposerUpdate();
         }
 
