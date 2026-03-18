@@ -71,7 +71,14 @@ class PhpunitCommand extends Command
                 continue;
             }
 
-            $relativeTestDir = Str::replaceFirst($basePath, '', $layer->path . '/tests');
+            $testDir = $layer->path . '/tests';
+
+            if (!is_dir($testDir)) {
+                $this->line("Testsuite <comment>{$layerName}</comment> has no tests/ directory, skipping.");
+                continue;
+            }
+
+            $relativeTestDir = Str::replaceFirst($basePath, '', $testDir);
             $relativeTestDir = str_replace('\\', '/', $relativeTestDir);
 
             $suite = $dom->createElement('testsuite');
