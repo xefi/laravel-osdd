@@ -21,8 +21,27 @@ class SeedCommandTest extends TestCase
 
     public function testItSkipsNonExistentSeederClasses(): void
     {
-        $this->app->make(SeederRegistry::class)->push('NonExistent\\Seeder');
+        $this->app->make(SeederRegistry::class)->push(0, 'NonExistent\\Seeder');
 
         $this->artisan('osdd:seed')->assertExitCode(0);
+    }
+
+    public function testSeedersAreReturnedInPriorityOrder(): void
+    {
+        $registry = $this->app->make(SeederRegistry::class);
+        $registry->push(10, 'Seeder\\C');
+        $registry->push(-5, 'Seeder\\A');
+        $registry->push(0,  'Seeder\\B');
+
+        $this->assertSame(['Seeder\\A', 'Seeder\\B', 'Seeder\\C'], $registry->seeders());
+    }
+
+    public function testSeedersWithSamePriorityPreserveRegistrationOrder(): void
+    {
+        $registry = $this->app->make(SeederRegistry::class);
+        $registry->push(0, 'Seeder\\First');
+        $registry->push(0, 'Seeder\\Second');
+
+        $this->assertSame(['Seeder\\First', 'Seeder\\Second'], $registry->seeders());
     }
 }

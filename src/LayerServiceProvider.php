@@ -9,9 +9,9 @@ abstract class LayerServiceProvider extends ServiceProvider
     /**
      * @param class-string<\Illuminate\Database\Seeder>[] $seeders
      */
-    protected function loadSeeders(array $seeders): void
+    protected function loadSeeders(array $seeders, int $priority = 0): void
     {
-        $this->app->make(SeederRegistry::class)->push(...$seeders);
+        $this->app->make(SeederRegistry::class)->push($priority, ...$seeders);
     }
 
     /**
