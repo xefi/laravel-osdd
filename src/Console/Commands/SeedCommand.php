@@ -32,6 +32,7 @@ class SeedCommand extends Command
 
             return self::SUCCESS;
         }
+        $seeders = $this->sortSeeders($seeders);
 
         foreach ($seeders as $seederClass) {
             if (!class_exists($seederClass)) {
@@ -44,5 +45,21 @@ class SeedCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    protected function sortSeeders(array $seeders): array
+    {
+        usort($seeders, function ($a, $b) {
+            $priorityA = (class_exists($a) && defined("$a::PRIORITY")) ? constant("$a::PRIORITY") : 100;
+            $priorityB = (class_exists($b) && defined("$b::PRIORITY")) ? constant("$b::PRIORITY") : 100;
+
+            if ($priorityA === $priorityB) {
+                return 0;
+            }
+
+            return ($priorityA < $priorityB) ? -1 : 1;
+        });
+
+        return $seeders;
     }
 }
