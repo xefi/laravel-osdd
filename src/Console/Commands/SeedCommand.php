@@ -23,8 +23,22 @@ class SeedCommand extends Command
      */
     protected $description = 'Run the seeder for all discovered OSDD layers';
 
+    protected $signature = 'osdd:seed
+        {--fresh : Run migrate:fresh before seeding}
+        {--refresh : Run migrate:refresh before seeding}';
+
     public function handle(SeederRegistry $registry): int
     {
+        if ($this->option('fresh')) {
+            if (($exitCode = $this->call('migrate:fresh')) !== self::SUCCESS) {
+                return $exitCode;
+            }
+        } elseif ($this->option('refresh')) {
+            if (($exitCode = $this->call('migrate:refresh')) !== self::SUCCESS) {
+                return $exitCode;
+            }
+        }
+
         $seeders = $registry->seeders();
 
         if (empty($seeders)) {
