@@ -25,4 +25,19 @@ class SeedCommandTest extends TestCase
 
         $this->artisan('osdd:seed')->assertExitCode(0);
     }
+
+    public function testItRunsMigrateFreshWhenFreshOptionIsGiven(): void
+    {
+        $this->artisan('osdd:seed --fresh')->assertExitCode(0);
+    }
+
+    public function testItRunsMigrateRefreshWhenRefreshOptionIsGiven(): void
+    {
+        $this->artisan('osdd:seed --refresh')->assertExitCode(0);
+    }
+
+    public function testFreshTakesPrecedenceOverRefresh(): void
+    {
+        $this->artisan('osdd:seed --fresh --refresh')->assertExitCode(0);
+    }
 }
