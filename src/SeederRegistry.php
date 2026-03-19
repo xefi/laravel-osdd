@@ -7,6 +7,7 @@ class SeederRegistry
     private array $seeders = [];
 
     /**
+     * @param int $priority Lower values run first; ties preserve registration order
      * @param class-string<\Illuminate\Database\Seeder> ...$seeders
      */
     public function push(int $priority, string ...$seeders): void
