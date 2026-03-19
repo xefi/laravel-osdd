@@ -30,9 +30,13 @@ class SeedCommand extends Command
     public function handle(SeederRegistry $registry): int
     {
         if ($this->option('fresh')) {
-            $this->call('migrate:fresh');
+            if (($exitCode = $this->call('migrate:fresh')) !== self::SUCCESS) {
+                return $exitCode;
+            }
         } elseif ($this->option('refresh')) {
-            $this->call('migrate:refresh');
+            if (($exitCode = $this->call('migrate:refresh')) !== self::SUCCESS) {
+                return $exitCode;
+            }
         }
 
         $seeders = $registry->seeders();
