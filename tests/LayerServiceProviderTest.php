@@ -107,4 +107,10 @@ class LayerServiceProviderTest extends TestCase
         $this->assertSame('value', $this->app['config']->get('brand-new.option'));
     }
 
+    public function testLayerAliasesAreNotRegisteredOutsideOfTinker(): void
+    {
+        // tinker is never in argv in this test class — aliases must stay empty
+        $this->assertNotContains('Functional\\TestLayer\\', $this->app['config']->get('tinker.alias', []));
+    }
+
 }
