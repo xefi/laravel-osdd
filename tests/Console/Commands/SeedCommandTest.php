@@ -43,6 +43,8 @@ class SeedCommandTest extends TestCase
         $registry->push(0, 'Seeder\\Second');
 
         $this->assertSame(['Seeder\\First', 'Seeder\\Second'], $registry->seeders());
+    }
+
     public function testItRunsMigrateFreshWhenFreshOptionIsGiven(): void
     {
         $this->artisan('osdd:seed --fresh')->assertExitCode(0);
