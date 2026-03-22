@@ -131,6 +131,26 @@ class LayerCommandTest extends TestCase
         $this->assertFilenameNotExists('functional/my-layer/src/Policies');
     }
 
+    public function testItCreatesLayerWithNoGenerators(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'my-layer')
+            ->expectsChoice('Which generators should be run?', [], $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/my-layer/composer.json');
+
+        $this->assertFilenameNotExists('functional/my-layer/database/migrations');
+        $this->assertFilenameNotExists('functional/my-layer/src/Models');
+        $this->assertFilenameNotExists('functional/my-layer/database/factories');
+        $this->assertFilenameNotExists('functional/my-layer/database/seeders');
+        $this->assertFilenameNotExists('functional/my-layer/src/Providers');
+        $this->assertFilenameNotExists('functional/my-layer/tests/Feature');
+        $this->assertFilenameNotExists('functional/my-layer/src/Http/Controllers');
+        $this->assertFilenameNotExists('functional/my-layer/src/Policies');
+    }
+
     public function testItDoesNotRegisterServiceProviderInLayerComposerJsonWhenNotSelected(): void
     {
         $this->artisan('osdd:layer')
