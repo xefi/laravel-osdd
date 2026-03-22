@@ -52,6 +52,17 @@ class ModelMakeCommandTest extends TestCase
         $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
     }
 
+    public function testItPromptsForNameWhenNotProvided(): void
+    {
+        $this->artisan('osdd:model')
+            ->expectsSearch('Which layer should this be generated in?', 'functional/test-layer', '', ['functional/test-layer' => 'functional/test-layer'])
+            ->expectsQuestion('What should the model be named?', 'User')
+            ->expectsChoice('Would you like any of the following?', [], ['seed' => 'Database Seeder', 'factory' => 'Factory', 'requests' => 'Form Requests', 'migration' => 'Migration', 'policy' => 'Policy', 'resource' => 'Resource Controller'])
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/test-layer/src/Models/User.php');
+    }
+
     public function testItGeneratesNestedModelInCorrectPath(): void
     {
         $this->artisan('osdd:model', ['name' => 'Admin/User', '--layer' => 'functional/test-layer'])

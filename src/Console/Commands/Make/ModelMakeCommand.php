@@ -4,8 +4,6 @@ namespace Xefi\LaravelOSDD\Console\Commands\Make;
 
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'osdd:model')]
 class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
@@ -18,11 +16,6 @@ class ModelMakeCommand extends \Illuminate\Foundation\Console\ModelMakeCommand
      * @var string
      */
     protected $name = 'osdd:model';
-
-    protected function interact(InputInterface $input, OutputInterface $output): void
-    {
-        $this->resolveLayer();
-    }
 
     protected function getStub(): string
     {
