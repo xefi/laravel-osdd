@@ -275,6 +275,7 @@ class LayerCommandTest extends TestCase
         );
 
         $this->assertStringNotContainsString('public function viewAny(', $contents);
+        $this->assertStringNotContainsString('use Functional\MyLayer\Models\MyLayer;', $contents);
     }
 
     private function allGenerators(): array

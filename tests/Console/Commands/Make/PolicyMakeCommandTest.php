@@ -97,5 +97,6 @@ class PolicyMakeCommandTest extends TestCase
         );
 
         $this->assertStringNotContainsString('{{ namespacedUserModel }}', $contents);
+        $this->assertStringNotContainsString('{{namespacedUserModel}}', $contents);
     }
 }
