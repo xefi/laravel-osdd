@@ -152,7 +152,7 @@ class LayerCommand extends Command
                 'service-provider' => $this->generateServiceProvider($layerPath . '/src/Providers', $namespace, $package, $layerPath),
                 'test'             => $this->call('osdd:test', ['name' => "{$pascal}Test", '--layer' => $name]),
                 'controller'       => $this->call('osdd:controller', ['name' => "{$pascal}Controller", '--layer' => $name]),
-                'policy'           => $this->call('osdd:policy', ['name' => "{$pascal}Policy", '--layer' => $name]),
+                'policy'           => $this->call('osdd:policy', array_filter(['name' => "{$pascal}Policy", '--layer' => $name, '--model' => $withModel ? $singular : null])),
                 default            => null,
             };
         }

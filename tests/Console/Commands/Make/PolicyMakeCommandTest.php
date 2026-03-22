@@ -76,4 +76,26 @@ class PolicyMakeCommandTest extends TestCase
             'public function delete(',
         ], 'functional/test-layer/src/Policies/UserPolicy.php');
     }
+
+    public function testItQualifiesModelWithModelsSubNamespace(): void
+    {
+        $this->artisan('osdd:policy', ['name' => 'UserPolicy', '--layer' => 'functional/test-layer', '--model' => 'User'])
+            ->assertExitCode(0);
+
+        $this->assertFileContains([
+            'use Functional\TestLayer\Models\User;',
+        ], 'functional/test-layer/src/Policies/UserPolicy.php');
+    }
+
+    public function testItReplacesUserModelPlaceholderInPolicyStub(): void
+    {
+        $this->artisan('osdd:policy', ['name' => 'UserPolicy', '--layer' => 'functional/test-layer', '--model' => 'User'])
+            ->assertExitCode(0);
+
+        $contents = $this->app['files']->get(
+            $this->app->basePath('functional/test-layer/src/Policies/UserPolicy.php')
+        );
+
+        $this->assertStringNotContainsString('{{ namespacedUserModel }}', $contents);
+    }
 }

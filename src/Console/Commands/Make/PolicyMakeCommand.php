@@ -27,6 +27,34 @@ class PolicyMakeCommand extends \Illuminate\Foundation\Console\PolicyMakeCommand
         return rtrim($rootNamespace, '\\') . '\\Policies';
     }
 
+    protected function qualifyModel(string $model): string
+    {
+        $model = ltrim($model, '\\/');
+        $model = str_replace('/', '\\', $model);
+        $rootNamespace = $this->rootNamespace();
+
+        if (Str::startsWith($model, $rootNamespace)) {
+            return $model;
+        }
+
+        return $rootNamespace . 'Models\\' . $model;
+    }
+
+    protected function replaceUserNamespace($stub): string
+    {
+        $model = $this->userProviderModel();
+
+        if (!$model) {
+            return $stub;
+        }
+
+        return str_replace(
+            ['{{ namespacedUserModel }}', '{{namespacedUserModel}}', $this->rootNamespace() . 'User'],
+            $model,
+            $stub
+        );
+    }
+
     protected function getStub(): string
     {
         if ($this->option('model')) {

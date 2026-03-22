@@ -244,6 +244,39 @@ class LayerCommandTest extends TestCase
         $this->assertFilenameExists('functional/my-layer/composer.json');
     }
 
+    public function testItLinksPolicyToModelWhenBothAreSelected(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'my-layer')
+            ->expectsChoice('Which generators should be run?', ['model', 'policy'], $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/my-layer/src/Policies/MyLayerPolicy.php');
+
+        $this->assertFileContains([
+            'use Functional\MyLayer\Models\MyLayer;',
+            'MyLayer $myLayer',
+        ], 'functional/my-layer/src/Policies/MyLayerPolicy.php');
+    }
+
+    public function testItGeneratesPlainPolicyWhenModelNotSelected(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'my-layer')
+            ->expectsChoice('Which generators should be run?', ['policy'], $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $this->assertFilenameExists('functional/my-layer/src/Policies/MyLayerPolicy.php');
+
+        $contents = $this->app['files']->get(
+            $this->app->basePath('functional/my-layer/src/Policies/MyLayerPolicy.php')
+        );
+
+        $this->assertStringNotContainsString('public function viewAny(', $contents);
+    }
+
     private function allGenerators(): array
     {
         return [
