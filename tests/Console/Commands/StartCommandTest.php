@@ -226,7 +226,7 @@ class StartCommandTest extends TestCase
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
 
         $urls = array_column($composer['repositories'] ?? [], 'url');
-        $this->assertContains('./functional/users', $urls);
+        $this->assertContains('./functional/*', $urls);
 
         $types = array_column($composer['repositories'], 'type');
         $this->assertContains('path', $types);
@@ -293,7 +293,7 @@ class StartCommandTest extends TestCase
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
 
         $urls = array_column($composer['repositories'] ?? [], 'url');
-        $this->assertContains('./technical/osdd', $urls);
+        $this->assertContains('./technical/*', $urls);
     }
 
     public function testItAddsOsddLayerToRequireInComposerJson(): void

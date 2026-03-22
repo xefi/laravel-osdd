@@ -39,15 +39,16 @@ trait RegistersLayerInComposer
 
     private function addPathRepository(array &$composer, string $relativePath): void
     {
+        $wildcardUrl = dirname($relativePath) . '/*';
         $repositories = $composer['repositories'] ?? [];
 
         foreach ($repositories as $repo) {
-            if (($repo['url'] ?? '') === $relativePath) {
+            if (($repo['url'] ?? '') === $wildcardUrl) {
                 return;
             }
         }
 
-        $repositories[] = ['type' => 'path', 'url' => $relativePath];
+        $repositories[] = ['type' => 'path', 'url' => $wildcardUrl];
         $composer['repositories'] = $repositories;
     }
 

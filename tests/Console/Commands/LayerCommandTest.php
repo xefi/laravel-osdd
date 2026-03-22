@@ -228,7 +228,7 @@ class LayerCommandTest extends TestCase
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
 
         $urls = array_column($composer['repositories'] ?? [], 'url');
-        $this->assertContains('./functional/my-layer', $urls);
+        $this->assertContains('./functional/*', $urls);
 
         $types = array_column($composer['repositories'], 'type');
         $this->assertContains('path', $types);
@@ -262,7 +262,7 @@ class LayerCommandTest extends TestCase
 
         $composer = json_decode($this->app['files']->get($this->composerPath), true);
 
-        $matching = array_filter($composer['repositories'] ?? [], fn($r) => ($r['url'] ?? '') === './functional/my-layer');
+        $matching = array_filter($composer['repositories'] ?? [], fn($r) => ($r['url'] ?? '') === './functional/*');
         $this->assertCount(1, $matching);
     }
 
