@@ -86,6 +86,7 @@ class LayerCommandTest extends TestCase
         $this->assertFileContains([
             '"name": "functional/my-layer"',
             '"type": "layer"',
+            '"version": "1.0.0"',
             '"Functional\\\\MyLayer\\\\": "src/"',
             '"Functional\\\\MyLayer\\\\Database\\\\Seeders\\\\": "database/seeders/"',
             '"Functional\\\\MyLayer\\\\Database\\\\Factories\\\\": "database/factories/"',
@@ -213,6 +214,7 @@ class LayerCommandTest extends TestCase
         $this->assertArrayHasKey('functional/my-layer', $composer['require']);
         $this->assertSame('*', $composer['require']['functional/my-layer']);
     }
+
 
     public function testItDoesNotDuplicateRepositoryOnRepeatRuns(): void
     {

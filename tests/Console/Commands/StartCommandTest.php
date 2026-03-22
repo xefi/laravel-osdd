@@ -244,6 +244,7 @@ class StartCommandTest extends TestCase
         $this->assertSame('*', $composer['require']['functional/users']);
     }
 
+
     public function testItCreatesTheOsddLayer(): void
     {
         $this->artisan('osdd:start')
@@ -265,6 +266,7 @@ class StartCommandTest extends TestCase
 
         $this->assertStringContainsString('"name": "technical/osdd"', $contents);
         $this->assertStringContainsString('"type": "layer"', $contents);
+        $this->assertStringContainsString('"version": "1.0.0"', $contents);
         $this->assertStringContainsString('"Technical\\\\Osdd\\\\": "src/"', $contents);
         $this->assertStringContainsString('OsddServiceProvider', $contents);
     }
