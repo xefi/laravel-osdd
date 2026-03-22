@@ -131,6 +131,19 @@ class LayerCommandTest extends TestCase
         $this->assertFilenameNotExists('functional/my-layer/src/Policies');
     }
 
+    public function testItDoesNotRegisterServiceProviderInLayerComposerJsonWhenNotSelected(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'my-layer')
+            ->expectsChoice('Which generators should be run?', ['migration', 'model'], $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $composer = json_decode($this->app['files']->get($this->app->basePath('functional/my-layer/composer.json')), true);
+
+        $this->assertEmpty($composer['extra']['laravel']['providers'] ?? []);
+    }
+
     public function testItSkipsPathPromptWhenOnlyOnePathIsConfigured(): void
     {
         $this->artisan('osdd:layer')

@@ -110,7 +110,6 @@ class LayerCommand extends Command
             label: 'Which generators should be run?',
             options: self::GENERATORS,
             default: self::DEFAULT_GENERATORS,
-            required: true,
         );
     }
 
