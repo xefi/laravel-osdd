@@ -41,7 +41,32 @@ class LayerServiceProviderTest extends TestCase
             {
                 $this->overrideConfigFrom($path, $key);
             }
+            public function callWithRouting(
+                array|string|null $web = null,
+                array|string|null $api = null,
+                ?string $commands = null,
+                ?string $channels = null,
+                ?string $health = null,
+                string $apiPrefix = 'api',
+            ): void {
+                $this->withRouting(
+                    web: $web,
+                    api: $api,
+                    commands: $commands,
+                    channels: $channels,
+                    health: $health,
+                    apiPrefix: $apiPrefix,
+                );
+            }
         };
+    }
+
+    private function writeRouteFile(string $filename, string $contents): string
+    {
+        $path = $this->tmpDir . '/' . $filename;
+        file_put_contents($path, $contents);
+
+        return $path;
     }
 
     public function testItOverridesAnExistingConfigKey(): void
@@ -113,4 +138,114 @@ class LayerServiceProviderTest extends TestCase
         $this->assertNotContains('Functional\\TestLayer\\', $this->app['config']->get('tinker.alias', []));
     }
 
+    public function testWithRoutingLoadsWebRoutesInsideTheWebMiddlewareGroup(): void
+    {
+        $path = $this->writeRouteFile(
+            'web.php',
+            "<?php \\Illuminate\\Support\\Facades\\Route::get('/dashboard', fn() => 'ok')->name('web.dashboard');\n",
+        );
+
+        $this->makeProvider()->callWithRouting(web: $path);
+
+        $route = $this->findRouteByName('web.dashboard');
+
+        $this->assertNotNull($route);
+        $this->assertSame('dashboard', $route->uri());
+        $this->assertSame(['web'], $route->middleware());
+    }
+
+    public function testWithRoutingLoadsApiRoutesWithApiPrefixAndMiddleware(): void
+    {
+        $path = $this->writeRouteFile(
+            'api.php',
+            "<?php \\Illuminate\\Support\\Facades\\Route::get('/things', fn() => 'ok')->name('api.things');\n",
+        );
+
+        $this->makeProvider()->callWithRouting(api: $path);
+
+        $route = $this->findRouteByName('api.things');
+
+        $this->assertNotNull($route);
+        $this->assertSame('api/things', $route->uri());
+        $this->assertSame(['api'], $route->middleware());
+    }
+
+    public function testWithRoutingHonoursACustomApiPrefix(): void
+    {
+        $path = $this->writeRouteFile(
+            'api.php',
+            "<?php \\Illuminate\\Support\\Facades\\Route::get('/things', fn() => 'ok')->name('api.v2.things');\n",
+        );
+
+        $this->makeProvider()->callWithRouting(api: $path, apiPrefix: 'api/v2');
+
+        $route = $this->findRouteByName('api.v2.things');
+
+        $this->assertNotNull($route);
+        $this->assertSame('api/v2/things', $route->uri());
+    }
+
+    public function testWithRoutingAcceptsMultipleFilesPerType(): void
+    {
+        $a = $this->writeRouteFile('a.php', "<?php \\Illuminate\\Support\\Facades\\Route::get('/a', fn() => 'a')->name('a');\n");
+        $b = $this->writeRouteFile('b.php', "<?php \\Illuminate\\Support\\Facades\\Route::get('/b', fn() => 'b')->name('b');\n");
+
+        $this->makeProvider()->callWithRouting(web: [$a, $b]);
+
+        $this->assertNotNull($this->findRouteByName('a'));
+        $this->assertNotNull($this->findRouteByName('b'));
+    }
+
+    public function testWithRoutingRegistersAHealthEndpoint(): void
+    {
+        $this->makeProvider()->callWithRouting(health: '/up');
+
+        $response = $this->get('/up');
+
+        $response->assertOk();
+        $response->assertJson(['status' => 'ok']);
+    }
+
+    public function testWithRoutingRequiresChannelsFileSoBroadcastChannelsAreRegistered(): void
+    {
+        $marker = $this->tmpDir . '/channels-loaded';
+        $path = $this->writeRouteFile('channels.php', "<?php file_put_contents('{$marker}', 'yes');\n");
+
+        $this->makeProvider()->callWithRouting(channels: $path);
+
+        $this->assertFileExists($marker);
+    }
+
+    public function testWithRoutingLoadsConsoleFileWhenRunningInConsole(): void
+    {
+        // Testbench runs PHPUnit through Artisan, so runningInConsole() is true here.
+        $marker = $this->tmpDir . '/console-loaded';
+        $path = $this->writeRouteFile('console.php', "<?php file_put_contents('{$marker}', 'yes');\n");
+
+        $this->makeProvider()->callWithRouting(commands: $path);
+
+        $this->assertFileExists($marker);
+    }
+
+    public function testWithRoutingSilentlySkipsMissingFiles(): void
+    {
+        $this->makeProvider()->callWithRouting(
+            web: $this->tmpDir . '/missing-web.php',
+            api: $this->tmpDir . '/missing-api.php',
+            commands: $this->tmpDir . '/missing-console.php',
+            channels: $this->tmpDir . '/missing-channels.php',
+        );
+
+        $this->assertNull($this->findRouteByName('web.dashboard'));
+    }
+
+    private function findRouteByName(string $name): ?\Illuminate\Routing\Route
+    {
+        foreach ($this->app['router']->getRoutes()->getRoutes() as $route) {
+            if ($route->getName() === $name) {
+                return $route;
+            }
+        }
+        return null;
+    }
 }
