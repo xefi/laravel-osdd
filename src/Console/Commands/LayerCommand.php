@@ -121,7 +121,7 @@ class LayerCommand extends Command
         $namespace   = $this->toNamespace($vendor, $package);
         $singular    = Str::singular(Str::studly($package));
         $pascal      = Str::studly($package);
-        $pluralSnake = Str::snake(Str::pluralStudly($package));
+        $pluralSnake = (string) Str::of($package)->replace('-', '_')->pluralStudly()->snake();
 
         // Create composer.json first — layer must be discoverable before make commands run
         $this->createFile(
