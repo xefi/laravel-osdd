@@ -72,8 +72,7 @@ abstract class LayerServiceProvider extends ServiceProvider
         }
 
         if (is_string($health)) {
-            Route::get($health, fn() => response()->json(['status' => 'ok']))
-                ->middleware('web');
+            Route::get($health, fn() => response()->json(['status' => 'ok']));
         }
 
         if (is_string($channels) && is_file($channels)) {
