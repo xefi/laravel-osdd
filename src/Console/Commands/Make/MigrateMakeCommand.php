@@ -8,6 +8,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 class MigrateMakeCommand extends \Illuminate\Database\Console\Migrations\MigrateMakeCommand
 {
     use ChoosesOsddLayer;
+    use RegistersInLayerProvider;
 
     /**
      * The console command signature.
@@ -19,6 +20,18 @@ class MigrateMakeCommand extends \Illuminate\Database\Console\Migrations\Migrate
         {--table= : The table to migrate}
         {--fullpath : Output the full path of the migration (Deprecated)}
         {--layer= : The layer to generate the file in}';
+
+    public function handle()
+    {
+        $result = parent::handle();
+
+        $this->registerInLayerProvider(
+            "\$this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');",
+            'database/migrations',
+        );
+
+        return $result;
+    }
 
     protected function getMigrationPath(): string
     {
