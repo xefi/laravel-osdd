@@ -329,9 +329,13 @@ class StartCommandTest extends TestCase
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
 
         $psr4 = $composer['autoload']['psr-4'] ?? [];
-        $this->assertArrayNotHasKey('App\\', $psr4);
         $this->assertArrayNotHasKey('Database\\Factories\\', $psr4);
         $this->assertArrayNotHasKey('Database\\Seeders\\', $psr4);
+
+        // The App\ mapping is kept so Laravel can still detect the application
+        // namespace once app/ is deleted.
+        $this->assertArrayHasKey('App\\', $psr4);
+        $this->assertSame('app/', $psr4['App\\']);
     }
 
     public function testItAsksForComposerUpdateConfirmation(): void
