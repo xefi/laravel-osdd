@@ -14,7 +14,7 @@ Use this skill whenever `xefi/laravel-osdd` is in the project's `composer.json`.
 - **Never** create files under `app/`, `database/migrations/`, `database/seeders/`, `database/factories/`, or root `config/`. Those directories do not exist in an OSDD project.
 - **Never** run a vanilla `make:*` command (`make:model`, `make:migration`, `make:controller`, …). Always use the `osdd:*` equivalent, which targets a specific layer.
 - **Never** edit `bootstrap/providers.php` to register a domain provider. Layer service providers are auto-registered via each layer's `composer.json` (`extra.laravel.providers`).
-- **Never** add a `psr-4` entry for `App\\`, `Database\\Factories\\` or `Database\\Seeders\\` to the root `composer.json`. `osdd:start` strips them on purpose.
+- **Never** add a `psr-4` entry for `Database\\Factories\\` or `Database\\Seeders\\` to the root `composer.json`. `osdd:start` strips them on purpose. The `App\\` mapping is kept so Laravel can still resolve an application namespace, but no code should live under `app/`.
 
 ## Features
 

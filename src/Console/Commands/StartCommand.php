@@ -140,7 +140,11 @@ class StartCommand extends Command
 
         $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
 
-        foreach (['App\\', 'Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
+        // Keep the `App\` mapping so Laravel can still detect an application
+        // namespace (getNamespace() otherwise throws once app/ is gone). Only
+        // the database factory/seeder namespaces are dropped — those live in
+        // layers under OSDD.
+        foreach (['Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
             unset($composer['autoload']['psr-4'][$key]);
             unset($composer['autoload-dev']['psr-4'][$key]);
         }
