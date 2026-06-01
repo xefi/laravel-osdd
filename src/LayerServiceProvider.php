@@ -2,6 +2,7 @@
 
 namespace Xefi\LaravelOSDD;
 
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\ServiceProvider;
 
 abstract class LayerServiceProvider extends ServiceProvider
@@ -26,6 +27,10 @@ abstract class LayerServiceProvider extends ServiceProvider
      */
     protected function overrideConfigFrom(string $path, string $key): void
     {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return;
+        }
+
         $config = $this->app->make('config');
 
         $config->set($key, array_replace_recursive(
