@@ -56,8 +56,10 @@ class ConfigMakeCommand extends \Illuminate\Foundation\Console\ConfigMakeCommand
             return;
         }
 
-        $pattern = '/(\n[ \t]*\})(\s+)([ \t]*public\s+function\s+register\b)/';
-        $updated = preg_replace($pattern, "\n        {$line}$1$2$3", $content, 1);
+        // Inject into register() so the override is applied before other
+        // packages boot and read their config (e.g. Horizon registering routes).
+        $pattern = '/(public\s+function\s+register\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{)/';
+        $updated = preg_replace($pattern, "$1\n        {$line}", $content, 1);
 
         if ($updated === $content) {
             $this->components->warn("Could not inject [overrideConfigFrom] for [{$configFile}] into [{$providerPath}]: unexpected formatting.");

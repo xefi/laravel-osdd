@@ -17,17 +17,20 @@ abstract class LayerServiceProvider extends ServiceProvider
 
     /**
      * Override an already-loaded config key with values from a file.
-     * Unlike mergeConfigFrom(), the layer values take priority over the
-     * package's own defaults (and over anything else loaded earlier).
+     *
+     * Unlike mergeConfigFrom(), the layer values take priority over whatever
+     * is already loaded — so a layer can override a third-party package's
+     * defaults (Horizon, Telescope, …) exactly like the app's own config
+     * folder does. Call this from register() so the override is in place
+     * before other packages boot and read their config.
      */
     protected function overrideConfigFrom(string $path, string $key): void
     {
-        $this->app->booted(function () use ($path, $key) {
-            $config = $this->app->make('config');
-            $config->set($key, array_replace_recursive(
-                $config->get($key, []),
-                require $path,
-            ));
-        });
+        $config = $this->app->make('config');
+
+        $config->set($key, array_replace_recursive(
+            $config->get($key, []),
+            require $path,
+        ));
     }
 }
