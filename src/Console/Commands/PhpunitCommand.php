@@ -50,10 +50,17 @@ class PhpunitCommand extends Command
             return self::FAILURE;
         }
 
+        $changed = $this->excludeMigrationsFromCoverage($dom, $xpath);
+
         $layers = LayersCollection::fromConfig();
 
         if ($layers->isEmpty()) {
             $this->warn('No OSDD layers discovered.');
+
+            if ($changed) {
+                $this->laravel['files']->put($xmlPath, $dom->saveXML());
+                $this->info('phpunit.xml updated successfully.');
+            }
 
             return self::SUCCESS;
         }
@@ -90,11 +97,54 @@ class PhpunitCommand extends Command
             $added++;
         }
 
-        if ($added > 0) {
+        if ($added > 0 || $changed) {
             $this->laravel['files']->put($xmlPath, $dom->saveXML());
             $this->info('phpunit.xml updated successfully.');
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Ensure layer migrations are excluded from code coverage.
+     *
+     * Every OSDD layer ships its own database/migrations directory; those files
+     * are schema boilerplate and must not count towards coverage metrics.
+     *
+     * @return bool whether the document was modified
+     */
+    private function excludeMigrationsFromCoverage(DOMDocument $dom, DOMXPath $xpath): bool
+    {
+        $migrationsPath = '**/database/migrations';
+
+        $alreadyExcluded = $xpath
+            ->query('//source/exclude/directory[normalize-space()="' . $migrationsPath . '"]')
+            ->item(0);
+
+        if ($alreadyExcluded) {
+            return false;
+        }
+
+        $source = $xpath->query('//source')->item(0);
+
+        if (!$source) {
+            $source = $dom->createElement('source');
+            $dom->documentElement->appendChild($source);
+        }
+
+        $exclude = $xpath->query('//source/exclude')->item(0);
+
+        if (!$exclude) {
+            $exclude = $dom->createElement('exclude');
+            $source->appendChild($exclude);
+        }
+
+        $directory = $dom->createElement('directory', $migrationsPath);
+        $directory->setAttribute('suffix', '.php');
+        $exclude->appendChild($directory);
+
+        $this->info("Excluded <comment>{$migrationsPath}</comment> from code coverage.");
+
+        return true;
     }
 }
