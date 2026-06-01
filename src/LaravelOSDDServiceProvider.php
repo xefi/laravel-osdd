@@ -50,8 +50,14 @@ class LaravelOSDDServiceProvider extends ServiceProvider
         $this->publishConfig();
 
         $this->app->booted(function () {
-            if (in_array('tinker', $_SERVER['argv'] ?? [])) {
+            $argv = $_SERVER['argv'] ?? [];
+
+            if (in_array('tinker', $argv)) {
                 $this->registerTinkerAliases();
+            }
+
+            if (in_array('ide-helper:models', $argv)) {
+                $this->registerIdeHelperModelLocations();
             }
         });
     }
@@ -130,6 +136,27 @@ class LaravelOSDDServiceProvider extends ServiceProvider
             require_once $map[$class]['path'];
             class_alias($map[$class]['fqcn'], $class);
         });
+    }
+
+    private function registerIdeHelperModelLocations(): void
+    {
+        $config = $this->app['config'];
+
+        if (! $config->has('ide-helper.model_locations')) {
+            return;
+        }
+
+        $locations = $config->get('ide-helper.model_locations', []);
+
+        foreach (LayersCollection::fromConfig() as $layer) {
+            $srcPath = rtrim($layer->manifest->srcPath($layer->path), '/\\');
+
+            if (is_dir($srcPath)) {
+                $locations[] = $srcPath;
+            }
+        }
+
+        $config->set('ide-helper.model_locations', array_values(array_unique($locations)));
     }
 
     private function buildLayerClassMap(): array
