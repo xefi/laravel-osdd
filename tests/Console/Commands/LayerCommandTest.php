@@ -30,6 +30,7 @@ class LayerCommandTest extends TestCase
     {
         $this->app['files']->deleteDirectory($this->app->basePath('functional/my-layer'));
         $this->app['files']->deleteDirectory($this->app->basePath('functional/my-auth-layer'));
+        $this->app['files']->deleteDirectory($this->app->basePath('functional/external-accounts'));
         $this->app['files']->deleteDirectory($this->app->basePath('technical/my-layer'));
 
         if ($this->composerOriginal !== null) {
@@ -57,6 +58,21 @@ class LayerCommandTest extends TestCase
         $this->assertFilenameExists('functional/my-layer/tests/Feature');
         $this->assertFilenameExists('functional/my-layer/src/Http/Controllers');
         $this->assertFilenameExists('functional/my-layer/src/Policies');
+        $this->assertFilenameExists('functional/my-layer/routes/web.php');
+        $this->assertFilenameExists('functional/my-layer/routes/api.php');
+        $this->assertFilenameExists('functional/my-layer/routes/console.php');
+        $this->assertFilenameExists('functional/my-layer/routes/channels.php');
+    }
+
+    public function testItDoesNotCreateRoutesDirectoryWhenRoutesGeneratorNotSelected(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'my-layer')
+            ->expectsChoice('Which generators should be run?', $this->defaultGenerators(), $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $this->assertFilenameNotExists('functional/my-layer/routes');
     }
 
     public function testItGeneratesNamedSeederForLayer(): void
@@ -108,6 +124,11 @@ class LayerCommandTest extends TestCase
             'class MyLayerServiceProvider extends LayerServiceProvider',
             "loadMigrationsFrom(__DIR__ . '/../../database/migrations')",
             'loadSeeders([MyLayerSeeder::class])',
+            '$this->withRouting(',
+            "web: __DIR__ . '/../../routes/web.php'",
+            "api: __DIR__ . '/../../routes/api.php'",
+            "commands: __DIR__ . '/../../routes/console.php'",
+            "channels: __DIR__ . '/../../routes/channels.php'",
         ], 'functional/my-layer/src/Providers/MyLayerServiceProvider.php');
     }
 
@@ -196,6 +217,21 @@ class LayerCommandTest extends TestCase
         $this->artisan('osdd:layer')
             ->expectsQuestion('Layer name', 'InvalidName')
             ->assertFailed();
+    }
+
+    public function testMigrationTableNameReplacesHyphensWithUnderscores(): void
+    {
+        $this->artisan('osdd:layer')
+            ->expectsQuestion('Layer name', 'external-accounts')
+            ->expectsChoice('Which generators should be run?', ['migration'], $this->allGenerators())
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $files = glob($this->app->basePath('functional/external-accounts/database/migrations/*_create_external_accounts_table.php'));
+        $this->assertNotEmpty($files);
+
+        $contents = $this->app['files']->get($files[0]);
+        $this->assertStringContainsString("Schema::create('external_accounts'", $contents);
     }
 
     public function testNamespaceIsCorrectlyDerivedFromHyphenatedNames(): void
@@ -324,6 +360,7 @@ class LayerCommandTest extends TestCase
             'test',
             'controller',
             'policy',
+            'routes',
         ];
     }
 

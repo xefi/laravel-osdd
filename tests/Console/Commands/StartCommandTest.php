@@ -152,6 +152,18 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('loadSeeders([UsersSeeder::class])', $contents);
     }
 
+    public function testItRebindsTheAuthUserModelToTheUsersLayer(): void
+    {
+        $this->artisan('osdd:start')
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
+
+        $this->assertStringContainsString('use Functional\Users\Models\User;', $contents);
+        $this->assertStringContainsString("config(['auth.providers.users.model' => User::class]);", $contents);
+    }
+
     public function testItDeletesTheAppDirectory(): void
     {
         $this->artisan('osdd:start')
@@ -317,9 +329,13 @@ class StartCommandTest extends TestCase
         $composer = json_decode(file_get_contents($this->projectPath . '/composer.json'), true);
 
         $psr4 = $composer['autoload']['psr-4'] ?? [];
-        $this->assertArrayNotHasKey('App\\', $psr4);
         $this->assertArrayNotHasKey('Database\\Factories\\', $psr4);
         $this->assertArrayNotHasKey('Database\\Seeders\\', $psr4);
+
+        // The App\ mapping is kept so Laravel can still detect the application
+        // namespace once app/ is deleted.
+        $this->assertArrayHasKey('App\\', $psr4);
+        $this->assertSame('app/', $psr4['App\\']);
     }
 
     public function testItAsksForComposerUpdateConfirmation(): void

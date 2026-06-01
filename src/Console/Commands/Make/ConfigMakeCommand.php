@@ -9,6 +9,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 class ConfigMakeCommand extends \Illuminate\Foundation\Console\ConfigMakeCommand
 {
     use ChoosesOsddLayer;
+    use RegistersInLayerProvider;
 
     protected $name = 'osdd:config';
 
@@ -30,43 +31,14 @@ class ConfigMakeCommand extends \Illuminate\Foundation\Console\ConfigMakeCommand
     {
         $result = parent::handle();
 
-        $this->injectOverrideIntoServiceProvider();
-
-        return $result;
-    }
-
-    private function injectOverrideIntoServiceProvider(): void
-    {
-        $layer = $this->resolveLayer();
-
-        $providerName = Str::studly($layer->manifest->package()) . 'ServiceProvider';
-        $providerPath = $layer->path . '/src/Providers/' . $providerName . '.php';
-
-        if (!$this->files->exists($providerPath)) {
-            return;
-        }
-
         $configFile = Str::finish($this->argument('name'), '.php');
         $configKey  = Str::before($configFile, '.php');
-        $line       = "\$this->overrideConfigFrom(__DIR__ . '/../../config/{$configFile}', '{$configKey}');";
 
-        $content = $this->files->get($providerPath);
+        $this->registerInLayerProvider(
+            "\$this->overrideConfigFrom(__DIR__ . '/../../config/{$configFile}', '{$configKey}');",
+            "config:{$configKey}",
+        );
 
-        if (str_contains($content, $line)) {
-            return;
-        }
-
-        // Inject into register() so the override is applied before other
-        // packages boot and read their config (e.g. Horizon registering routes).
-        $pattern = '/(public\s+function\s+register\s*\([^)]*\)\s*(?::\s*\w+\s*)?\{)/';
-        $updated = preg_replace($pattern, "$1\n        {$line}", $content, 1);
-
-        if ($updated === $content) {
-            $this->components->warn("Could not inject [overrideConfigFrom] for [{$configFile}] into [{$providerPath}]: unexpected formatting.");
-            return;
-        }
-
-        $this->files->put($providerPath, $updated);
-        $this->components->info("Added [overrideConfigFrom] for [{$configFile}] to [{$providerPath}].");
+        return $result;
     }
 }

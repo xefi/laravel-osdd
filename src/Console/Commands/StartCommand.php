@@ -75,15 +75,10 @@ class StartCommand extends Command
             '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
         ]);
 
-        // Create service provider from layer stub
+        // Create service provider from start stub (rebinds the auth user model to the layer)
         $this->createFile(
             $layerPath . '/src/Providers/UsersServiceProvider.php',
-            $this->resolveStub('service-provider'),
-            [
-                '{{ namespace }}'   => self::USERS_LAYER_NAMESPACE,
-                '{{ class }}'       => 'UsersServiceProvider',
-                '{{ seederClass }}' => 'UsersSeeder',
-            ],
+            $this->resolveStartStub('user-service-provider'),
         );
 
         $this->injectProviderInComposerJson(
@@ -140,7 +135,11 @@ class StartCommand extends Command
 
         $composer = json_decode($this->files->get($composerPath), true, 512, JSON_THROW_ON_ERROR);
 
-        foreach (['App\\', 'Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
+        // Keep the `App\` mapping so Laravel can still detect an application
+        // namespace (getNamespace() otherwise throws once app/ is gone). Only
+        // the database factory/seeder namespaces are dropped — those live in
+        // layers under OSDD.
+        foreach (['Database\\Factories\\', 'Database\\Seeders\\'] as $key) {
             unset($composer['autoload']['psr-4'][$key]);
             unset($composer['autoload-dev']['psr-4'][$key]);
         }
