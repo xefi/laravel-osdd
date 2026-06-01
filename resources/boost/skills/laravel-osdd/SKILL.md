@@ -304,7 +304,7 @@ return [
 
 `LayersCollection::fromConfig()` reads `config('osdd.layers.paths')`, scans each path **recursively**, and treats any directory containing a `composer.json` with `"type": "layer"` as a layer. Nested layers (e.g. `functional/billing/invoices/`) are supported as long as each level satisfies that contract; once a layer is matched at a given depth, scanning stops descending into it.
 
-To add a new category (e.g. `support/`), append it to `osdd.layers.paths` from inside the `technical/osdd` layer's `OsddServiceProvider::boot()` using `$this->overrideConfigFrom(...)`. Don't edit the package's own `config/osdd.php` directly.
+To add a new category (e.g. `support/`), append it to `osdd.layers.paths` from inside the `technical/osdd` layer's `OsddServiceProvider::register()` using `$this->overrideConfigFrom(...)`. Don't edit the package's own `config/osdd.php` directly.
 
 ## Idiomatic file content
 
@@ -559,13 +559,13 @@ A layer can depend on another layer's public API by typing against its FQCN — 
 
 ### Override a layer's config from another layer
 
-Inside a `LayerServiceProvider::boot()`:
+Inside a `LayerServiceProvider::register()`:
 
 ```php
 $this->overrideConfigFrom(__DIR__ . '/../../config/billing.php', 'billing');
 ```
 
-Use `overrideConfigFrom` (the layer base-class helper) rather than Laravel's `mergeConfigFrom` when you need the layer's values to win over previously-loaded defaults.
+Use `overrideConfigFrom` (the layer base-class helper) rather than Laravel's `mergeConfigFrom` when you need the layer's values to win over previously-loaded defaults. Call it from `register()` (not `boot()`) so the override is in place before other packages boot and read their config — e.g. Horizon reading `horizon.path` while registering its routes.
 
 ## Testing workflow
 

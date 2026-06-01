@@ -8,11 +8,11 @@ class OsddServiceProvider extends LayerServiceProvider
 {
     public function boot(): void
     {
-        $this->overrideConfigFrom(__DIR__ . '/../../config/osdd.php', 'osdd');
+        //
     }
 
     public function register(): void
     {
-        //
+        $this->overrideConfigFrom(__DIR__ . '/../../config/osdd.php', 'osdd');
     }
 }
