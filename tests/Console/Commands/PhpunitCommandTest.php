@@ -95,6 +95,38 @@ class PhpunitCommandTest extends TestCase
         $this->app['files']->deleteDirectory($layerPath);
     }
 
+    public function testItExcludesLayerMigrationsFromCoverage(): void
+    {
+        $this->artisan('osdd:phpunit')->assertExitCode(0);
+
+        $xml = $this->app['files']->get($this->xmlPath);
+        $dom = new \DOMDocument();
+        $dom->loadXML($xml);
+
+        $xpath = new \DOMXPath($dom);
+        $directory = $xpath
+            ->query('//source/exclude/directory[normalize-space()="**/database/migrations"]')
+            ->item(0);
+
+        $this->assertNotNull($directory);
+        $this->assertSame('.php', $directory->getAttribute('suffix'));
+    }
+
+    public function testItDoesNotDuplicateTheMigrationsExclusion(): void
+    {
+        $this->artisan('osdd:phpunit')->assertExitCode(0);
+        $this->artisan('osdd:phpunit')->assertExitCode(0);
+
+        $xml = $this->app['files']->get($this->xmlPath);
+        $dom = new \DOMDocument();
+        $dom->loadXML($xml);
+
+        $xpath = new \DOMXPath($dom);
+        $directories = $xpath->query('//source/exclude/directory[normalize-space()="**/database/migrations"]');
+
+        $this->assertSame(1, $directories->length);
+    }
+
     public function testItFailsWhenPhpunitXmlIsMissing(): void
     {
         $this->app['files']->delete($this->xmlPath);
