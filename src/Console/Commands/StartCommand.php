@@ -75,15 +75,10 @@ class StartCommand extends Command
             '{{ namespace }}' => str_replace('\\', '\\\\', self::USERS_LAYER_NAMESPACE),
         ]);
 
-        // Create service provider from layer stub
+        // Create service provider from start stub (rebinds the auth user model to the layer)
         $this->createFile(
             $layerPath . '/src/Providers/UsersServiceProvider.php',
-            $this->resolveStub('service-provider'),
-            [
-                '{{ namespace }}'   => self::USERS_LAYER_NAMESPACE,
-                '{{ class }}'       => 'UsersServiceProvider',
-                '{{ seederClass }}' => 'UsersSeeder',
-            ],
+            $this->resolveStartStub('user-service-provider'),
         );
 
         $this->injectProviderInComposerJson(

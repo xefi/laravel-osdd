@@ -9,6 +9,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 class SeederMakeCommand extends \Illuminate\Database\Console\Seeds\SeederMakeCommand
 {
     use ChoosesOsddLayer;
+    use RegistersInLayerProvider;
 
     /**
      * The console command name.
@@ -16,6 +17,20 @@ class SeederMakeCommand extends \Illuminate\Database\Console\Seeds\SeederMakeCom
      * @var string
      */
     protected $name = 'osdd:seeder';
+
+    public function handle()
+    {
+        $result = parent::handle();
+
+        $seederClass = $this->qualifyClass($this->getNameInput());
+
+        $this->registerInLayerProvider(
+            "\$this->loadSeeders([\\{$seederClass}::class]);",
+            $seederClass,
+        );
+
+        return $result;
+    }
 
     protected function rootNamespace(): string
     {

@@ -152,6 +152,18 @@ class StartCommandTest extends TestCase
         $this->assertStringContainsString('loadSeeders([UsersSeeder::class])', $contents);
     }
 
+    public function testItRebindsTheAuthUserModelToTheUsersLayer(): void
+    {
+        $this->artisan('osdd:start')
+            ->expectsConfirmation('Run composer update now?', 'no')
+            ->assertExitCode(0);
+
+        $contents = file_get_contents($this->projectPath . '/functional/users/src/Providers/UsersServiceProvider.php');
+
+        $this->assertStringContainsString('use Functional\Users\Models\User;', $contents);
+        $this->assertStringContainsString("config(['auth.providers.users.model' => User::class]);", $contents);
+    }
+
     public function testItDeletesTheAppDirectory(): void
     {
         $this->artisan('osdd:start')
