@@ -42,10 +42,16 @@ php artisan osdd:model Order --layer=functional/orders --factory --migration
 php artisan osdd:seed --fresh
 ```
 
-- **Layer-scoped config**: `osdd:config` creates `{layer}/config/{name}.php` and automatically injects `$this->overrideConfigFrom(...)` into the layer's `register()` method. Example usage:
+- **Layer-scoped config**: `osdd:config` creates `{layer}/config/{name}.php` and automatically injects `$this->overrideConfigFrom(...)` into the layer's service provider. Example usage:
 
 ```bash
 php artisan osdd:config orders --layer=functional/orders
+```
+
+- **Layer-scoped routing**: a generated layer provider calls `$this->withRouting(...)`, which mounts `routes/web.php` (in the `web` group), `routes/api.php` (in the `api` group, prefixed `api`), `routes/console.php`, and `routes/channels.php` — each only if the file exists, and skipped entirely when routes are cached. Scaffold the route files with the `routes` generator. Example usage:
+
+```bash
+php artisan osdd:layer functional/orders --generators=service-provider,routes
 ```
 
 - **PHPUnit suite sync**: `osdd:phpunit` walks every discovered layer and adds a `<testsuite>` entry for each one to the root `phpunit.xml`. Idempotent. Example usage:
@@ -54,7 +60,7 @@ php artisan osdd:config orders --layer=functional/orders
 php artisan osdd:phpunit
 ```
 
-- **`LayerServiceProvider` base class**: every layer's own provider extends `Xefi\LaravelOSDD\LayerServiceProvider` (not Laravel's `ServiceProvider`) to gain `loadSeeders()` and `overrideConfigFrom()`. Example usage:
+- **`LayerServiceProvider` base class**: every layer's own provider extends `Xefi\LaravelOSDD\LayerServiceProvider` (not Laravel's `ServiceProvider`) to gain `loadSeeders()`, `overrideConfigFrom()`, and `withRouting()`. Example usage:
 
 ```php
 class OrdersServiceProvider extends \Xefi\LaravelOSDD\LayerServiceProvider
@@ -136,11 +142,12 @@ Don't put HTTP plumbing (controllers, requests, routes) in a `technical/` layer 
 
 ## The two service providers
 
-- **`Xefi\LaravelOSDD\LaravelOSDDServiceProvider`** — the package's own provider. Registers all `osdd:*` commands, the `SeederRegistry` singleton, publishes `config/osdd.php`, and (when `php artisan tinker` runs) builds class-name aliases so you can reference layer models by their short name in tinker without typing the full FQCN.
+- **`Xefi\LaravelOSDD\LaravelOSDDServiceProvider`** — the package's own provider. Registers all `osdd:*` commands, the `SeederRegistry` singleton, publishes `config/osdd.php`, and (when `php artisan tinker` runs) builds class-name aliases so you can reference layer models by their short name in tinker without typing the full FQCN. When `php artisan ide-helper:models` runs, it also merges every layer's `src/` directory into `ide-helper.model_locations` (preserving existing locations and de-duplicating) so `barryvdh/laravel-ide-helper` discovers models that live inside layers.
 
 - **`Xefi\LaravelOSDD\LayerServiceProvider`** — the abstract base class **every layer's own provider must extend** (not Laravel's `ServiceProvider`). It exposes:
   - `loadSeeders(array $seeders, int $priority = 0)` — registers seeder classes with the global registry. Lower priority runs first. This is the **only** way to make a seeder runnable by `osdd:seed`.
-  - `overrideConfigFrom(string $path, string $key)` — like `mergeConfigFrom`, but the layer's values win over previously-loaded defaults. Used by the technical OSDD layer to override `config('osdd')` from inside the application.
+  - `overrideConfigFrom(string $path, string $key)` — like `mergeConfigFrom`, but the layer's values win over previously-loaded defaults. Used by the technical OSDD layer to override `config('osdd')` from inside the application. Skips the merge when configuration is cached.
+  - `withRouting(web:, api:, commands:, channels:, health:, apiPrefix: 'api')` — mounts a layer's route files following Laravel's standard conventions: `web` files in the `web` middleware group, `api` files in the `api` group behind the `apiPrefix`, `commands`/`channels` files `require`d, and `health` registered as a GET endpoint returning `{"status":"ok"}`. Each argument is optional; missing files are skipped, and the whole call is a no-op when routes are cached. For anything beyond these conventions (custom prefixes, domains, named groups), use the `Route` facade directly in `boot()`.
 
 A freshly generated layer provider looks like:
 
@@ -158,6 +165,13 @@ class OrdersServiceProvider extends LayerServiceProvider
             $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
             $this->loadSeeders([OrdersSeeder::class]);
         }
+
+        $this->withRouting(
+            web: __DIR__ . '/../../routes/web.php',
+            api: __DIR__ . '/../../routes/api.php',
+            commands: __DIR__ . '/../../routes/console.php',
+            channels: __DIR__ . '/../../routes/channels.php',
+        );
     }
 
     public function register(): void
@@ -167,9 +181,19 @@ class OrdersServiceProvider extends LayerServiceProvider
 }
 ```
 
-### What the generator does NOT wire for you
+The `withRouting()` call is always present in a generated provider. The referenced route files are **not** created unless you run the `routes` generator (or `osdd:layer --generators=…,routes`) — `withRouting()` simply skips any path that doesn't exist, so an unused call is harmless.
 
-The generated provider only handles **migrations** and **seeders**. Anything else a layer needs must be added by hand to `boot()`:
+### What the generator wires — and what it doesn't
+
+The generated provider wires **migrations**, **seeders**, and **routing** (`withRouting()`). On top of that, the make commands keep the provider in sync as you generate:
+
+- `osdd:migration` injects `$this->loadMigrationsFrom(...)` (if not already present).
+- `osdd:seeder` injects `$this->loadSeeders([...])`.
+- `osdd:config` injects `$this->overrideConfigFrom(...)`.
+
+These injections are idempotent and silently no-op when the layer's service provider is missing or already contains the statement. (They land in `boot()`; for `overrideConfigFrom` specifically, see the note under `osdd:config` about moving it to `register()` when cross-package boot timing matters.)
+
+Views and translations are still **not** wired automatically — add them by hand when the layer has them:
 
 ```php
 public function boot(): void
@@ -179,9 +203,12 @@ public function boot(): void
         $this->loadSeeders([OrdersSeeder::class]);
     }
 
+    $this->withRouting(
+        web: __DIR__ . '/../../routes/web.php',
+        api: __DIR__ . '/../../routes/api.php',
+    );
+
     // Add these only when the layer has them — they are NOT generated.
-    $this->loadRoutesFrom(__DIR__ . '/../../routes/web.php');
-    $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
     $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'orders');
     $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'orders');
 
@@ -190,7 +217,7 @@ public function boot(): void
 }
 ```
 
-There is no `routes/`, `lang/`, or `resources/views/` directory created by `osdd:layer` — create them manually when needed (or generate views with `osdd:view`, which creates `resources/views/` on demand). Route files must always be added by hand.
+The `routes/` directory is created by the `routes` generator (`osdd:layer --generators=…,routes`), which scaffolds `web.php`, `api.php`, `console.php`, and `channels.php` from stubs. There is no `lang/` or `resources/views/` directory created by `osdd:layer` — create them manually when needed (or generate views with `osdd:view`, which creates `resources/views/` on demand).
 
 ### Tests directory
 
@@ -206,10 +233,10 @@ php artisan osdd:start
 
 Run **once**, immediately after `composer require xefi/laravel-osdd`, on a fresh Laravel app. It:
 
-1. Creates `functional/users/` (a starter Users layer with Model, Factory, Seeder, and migration).
+1. Creates `functional/users/` (a starter Users layer with Model, Factory, Seeder, and migration). Its `UsersServiceProvider::register()` rebinds Laravel's default auth user model with `config(['auth.providers.users.model' => User::class])` so `auth()`/guards resolve the layer's `Functional\Users\Models\User`.
 2. Creates `technical/osdd/` (a layer that owns the `config/osdd.php` override).
 3. Deletes `app/`, `database/`, and root `config/`.
-4. Clears legacy `App\\`, `Database\\Factories\\`, `Database\\Seeders\\` PSR-4 entries from the root `composer.json`.
+4. Strips the `Database\\Factories\\` and `Database\\Seeders\\` PSR-4 entries from the root `composer.json`. The `App\\` mapping is **kept** (so Laravel can still detect the application namespace) — no code should live under `app/`, but the mapping stays.
 5. Empties `bootstrap/providers.php` (layer providers are auto-discovered).
 6. Prompts `composer update`.
 
@@ -227,7 +254,7 @@ php artisan osdd:layer functional/orders \
   --generators=migration,model,factory,service-provider,test
 ```
 
-Available generators: `migration`, `model`, `factory`, `seeder`, `service-provider`, `test`, `controller`, `policy`. Defaults: `migration, model, factory, service-provider, test`.
+Available generators: `migration`, `model`, `factory`, `seeder`, `service-provider`, `test`, `controller`, `policy`, `routes`. Defaults: `migration, model, factory, service-provider, test` (note: `routes` is **not** a default — add it explicitly when the layer needs route files).
 
 Behind the scenes `osdd:layer`:
 
@@ -263,8 +290,9 @@ Full list of mirrored generators: `cast`, `channel`, `class`, `config`, `console
 Notes on a few that diverge from vanilla Laravel:
 
 - **`osdd:model`** — bypasses Laravel's interactive "also create…" prompt. Use the flags directly: `--factory`, `--migration`, `--seed`, `--controller`, `--resource`, `--api`, `--requests`, `--policy`, or `--all`. When `--factory` is set, the generated model uses a custom stub that adds `use HasFactory;` and `#[UseFactory(...)]` pointing at the layer's factory namespace. Without `--factory`, the model is bare — neither the trait nor the attribute is added. **Nested models work**: `osdd:model Admin/User --layer=…` creates `src/Models/Admin/User.php` with namespace `…\Models\Admin`.
-- **`osdd:config <name>`** — creates `{layer}/config/{name}.php` **and** injects `$this->overrideConfigFrom(__DIR__ . '/../../config/{name}.php', '{name}');` into the layer's `register()` method. The injection is idempotent; don't add this line by hand. If the layer's service provider doesn't exist, the config file is still created but no override is wired.
-- **`osdd:migration`** — places the file in the resolved layer's `database/migrations/` directory; the layer's service provider already loads it via `loadMigrationsFrom`.
+- **`osdd:config <name>`** — creates `{layer}/config/{name}.php` **and** injects `$this->overrideConfigFrom(__DIR__ . '/../../config/{name}.php', '{name}');` into the layer's service provider `boot()` method (via the shared `RegistersInLayerProvider` helper). The injection is idempotent; don't add this line by hand. If the layer's service provider doesn't exist, the config file is still created but no override is wired. Note: `overrideConfigFrom` is most effective in `register()` (so the override is in place before other packages boot and read their config); if a layer overrides config that another package consumes during its own boot, move the injected line into `register()` manually.
+- **`osdd:migration`** — places the file in the resolved layer's `database/migrations/` directory and injects `$this->loadMigrationsFrom(...)` into the layer provider (idempotent). The generated provider already loads migrations, so this is usually a no-op for the standard layout.
+- **`osdd:seeder`** — creates the seeder **and** injects `$this->loadSeeders([\…\YourSeeder::class]);` into the layer provider's `boot()` (idempotent). You no longer have to wire `loadSeeders()` by hand for generated seeders — but a hand-written seeder still needs the call added manually.
 - **`osdd:test`** — `--unit` switches the namespace to `Tests\Unit` and the path to `tests/Unit/`; otherwise it's `Tests\Feature` / `tests/Feature/`.
 - **`osdd:policy --model=Name`** — generates a full Laravel policy with type-hinted model methods (`viewAny`, `view`, `create`, …). Without `--model`, a minimal stub class is generated.
 - **`osdd:controller --requests`** — generates `Store{Model}Request` and `Update{Model}Request` in the same layer alongside the controller.
@@ -277,7 +305,7 @@ php artisan osdd:seed --fresh    # runs migrate:fresh first
 php artisan osdd:seed --refresh  # runs migrate:refresh first
 ```
 
-`osdd:seed` iterates the `SeederRegistry` and calls `db:seed --class=…` for every registered class. A seeder appears in this list **only** if its layer's service provider called `$this->loadSeeders([...])`. If `osdd:seed` reports no seeders, the missing piece is a `loadSeeders()` call in the relevant `LayerServiceProvider::boot()`.
+`osdd:seed` iterates the `SeederRegistry` and calls `db:seed --class=…` for every registered class. A seeder appears in this list **only** if its layer's service provider called `$this->loadSeeders([...])`. `osdd:seeder` injects that call automatically; a **hand-written** seeder still needs it added by hand. If `osdd:seed` reports no seeders, the missing piece is a `loadSeeders()` call in the relevant `LayerServiceProvider::boot()`.
 
 ### Sync `phpunit.xml` with layer test suites
 
@@ -285,7 +313,7 @@ php artisan osdd:seed --refresh  # runs migrate:refresh first
 php artisan osdd:phpunit
 ```
 
-Walks every discovered layer and, for each one with a `tests/` directory, adds a `<testsuite name="vendor/package"><directory>relative/path/to/tests</directory></testsuite>` entry to the root `phpunit.xml`. Idempotent — existing suites are skipped. Run after creating a layer if you want `vendor/bin/phpunit` to pick it up automatically.
+Walks every discovered layer and, for each one with a `tests/` directory, adds a `<testsuite name="vendor/package"><directory>relative/path/to/tests</directory></testsuite>` entry to the root `phpunit.xml`. It also adds a `<directory>**/database/migrations</directory>` exclusion under `<source>` so layer migrations don't count against code coverage. Both are idempotent — existing entries are skipped, and the file is written even when no layers are discovered (so the coverage exclusion still gets added). Run after creating a layer if you want `vendor/bin/phpunit` to pick it up automatically.
 
 ## Configuration
 
@@ -472,8 +500,8 @@ Before adding code, locate the right layer. The `app/` and root `database/` dire
 1. **Find the layer that owns a concept.** Look for `{path}/{name}/composer.json` and check the `name` field. The layer name (`functional/orders`) tells you the path (`functional/orders/`) and namespace root (`Functional\Orders`).
 2. **List all layers.** `find functional technical -maxdepth 2 -name composer.json -exec grep -l '"type": "layer"' {} \;` (or browse the two configured directories — `functional/` and `technical/` by default).
 3. **Find where a class lives.** Search for the class name in the relevant layer's `src/`. Layers don't share code by accident — if a class isn't there, it's in another layer, in the package itself, or in `vendor/`.
-4. **Find a route.** Routes are layer-local. Check each layer's `routes/` directory and its `LayerServiceProvider::boot()` for `loadRoutesFrom(...)` calls. Routes are only mounted if the layer provider wires them.
-5. **Find a config key.** Layer-defined config lives in `{layer}/config/{name}.php` and is loaded into `config('{name}')` via `overrideConfigFrom`. Look at the layer's `LayerServiceProvider::register()` to see what keys it overrides.
+4. **Find a route.** Routes are layer-local. Check each layer's `routes/` directory (`web.php`, `api.php`, `console.php`, `channels.php`) — they're mounted by the `$this->withRouting(...)` call in the layer's `LayerServiceProvider::boot()`. Routes only exist if the layer ships the file and the provider's `withRouting()` references it.
+5. **Find a config key.** Layer-defined config lives in `{layer}/config/{name}.php` and is loaded into `config('{name}')` via `overrideConfigFrom`. Look at the layer's `LayerServiceProvider` (`osdd:config` injects the call into `boot()`; hand-wired overrides often sit in `register()`) to see what keys it overrides.
 
 When a user asks "where should I add X?", the answer is always "in the layer responsible for X" — never `app/`. If no layer matches, the answer is "create a new layer with `osdd:layer`."
 
@@ -518,12 +546,12 @@ For a fully wired CRUD resource (`Invoice` in `functional/billing`) — migratio
 php artisan osdd:model Invoice --layer=functional/billing --all
 #   → creates model, factory, seeder, migration, resource controller, policy, requests
 
-# 2. Add a route. Routes are never generated — create routes/web.php manually
-#    in the layer, then load it from the layer provider.
+# 2. Add a route. Scaffold the route files (if the layer doesn't have them yet),
+#    then define the route — the generated provider's withRouting() already mounts
+#    routes/web.php, so no extra wiring is needed.
+#      php artisan osdd:layer functional/billing --generators=routes   # if missing
 #    functional/billing/routes/web.php:
 #      Route::resource('invoices', \Functional\Billing\Http\Controllers\InvoiceController::class);
-#    functional/billing/src/Providers/BillingServiceProvider.php boot():
-#      $this->loadRoutesFrom(__DIR__ . '/../../routes/web.php');
 
 # 3. Wire the policy. Auto-discovery doesn't cross layers — register it explicitly.
 #    In BillingServiceProvider::boot():
@@ -632,8 +660,8 @@ Before running any `osdd:*` make command, confirm:
 - **Omitting `--layer` in non-interactive contexts**: hangs on `Laravel\Prompts\search`. Always pass `--layer=vendor/package` explicitly when scripting.
 - **Forgetting `"type": "layer"` in a hand-written `composer.json`**: the layer is invisible to `LayersCollection`, so its migrations don't load, its tests aren't synced, and its seeders aren't registered. Symptom: `osdd:seed` says "No OSDD seeders registered" even though the file exists.
 - **Extending `Illuminate\Support\ServiceProvider` in a layer**: works, but loses `loadSeeders()` and `overrideConfigFrom()`. Always extend `Xefi\LaravelOSDD\LayerServiceProvider`.
-- **Creating a seeder file but not calling `loadSeeders()`**: the seeder won't run from `osdd:seed`. Add it to the layer provider's `boot()`.
-- **Adding a route file without `loadRoutesFrom()`**: the route silently doesn't exist at runtime — `php artisan route:list` won't show it. Wire it in the layer provider.
+- **Writing a seeder by hand without calling `loadSeeders()`**: the seeder won't run from `osdd:seed`. `osdd:seeder` injects the call automatically; a hand-written seeder needs it added to the layer provider's `boot()`.
+- **A route file the provider's `withRouting()` doesn't reference**: the route silently doesn't exist at runtime — `php artisan route:list` won't show it. The generated provider's `withRouting()` only mounts the standard `routes/{web,api,console,channels}.php` paths; a route file at a non-standard path (or a regenerated provider that lost the call) needs `withRouting()` updated, or a manual `Route::...->group(...)` in `boot()`.
 - **Registering a policy via `AuthServiceProvider`** (which doesn't exist in an OSDD app): use `Gate::policy()` in the owning layer's `LayerServiceProvider::boot()` instead.
 - **Putting a test class under the default `Tests\` namespace**: the layer's PSR-4 won't autoload it. Always use `…\Tests\Feature` or `…\Tests\Unit` matching the layer namespace.
 - **Editing the package's `config/osdd.php` directly** instead of overriding it from `technical/osdd`: changes get lost on `composer update`. Override via the technical OSDD layer.
@@ -653,6 +681,6 @@ Before running any `osdd:*` make command, confirm:
 | A factory | `database/factories/` (root) | `osdd:factory … --layer=…` |
 | A config file | `config/` (root) | `osdd:config name --layer=…` |
 | A service provider | `app/Providers/` + `bootstrap/providers.php` | `osdd:layer` (auto-creates one) or extend `LayerServiceProvider` inside a layer |
-| A route | `routes/web.php` (root, for layer-owned routes) | `{layer}/routes/web.php` + `loadRoutesFrom` in the provider |
+| A route | `routes/web.php` (root, for layer-owned routes) | `{layer}/routes/web.php` (via `osdd:layer --generators=routes`) — mounted by the provider's `withRouting()` |
 | A view | `resources/views/` (root) | `osdd:view name --layer=…` or `{layer}/resources/views/` + `loadViewsFrom` |
 | A policy | `app/Policies/` | `osdd:policy … --layer=…` + `Gate::policy()` in the provider |
