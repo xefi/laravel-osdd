@@ -35,6 +35,7 @@ class LayerCommand extends Command
         'test',
         'controller',
         'policy',
+        'routes',
     ];
 
     private const DEFAULT_GENERATORS = ['migration', 'model', 'factory', 'service-provider', 'test'];
@@ -152,11 +153,22 @@ class LayerCommand extends Command
                 'test'             => $this->call('osdd:test', ['name' => "{$pascal}Test", '--layer' => $name]),
                 'controller'       => $this->call('osdd:controller', ['name' => "{$pascal}Controller", '--layer' => $name]),
                 'policy'           => $this->call('osdd:policy', array_filter(['name' => "{$pascal}Policy", '--layer' => $name, '--model' => $withModel ? $singular : null])),
+                'routes'           => $this->generateRoutes($layerPath),
                 default            => null,
             };
         }
 
         $this->registerLayerInComposer($name, $layerPath);
+    }
+
+    private function generateRoutes(string $layerPath): void
+    {
+        foreach (['web', 'api', 'console', 'channels'] as $file) {
+            $this->createFile(
+                $layerPath . '/routes/' . $file . '.php',
+                $this->files->get(__DIR__ . '/../stubs/layer/routes/' . $file . '.stub'),
+            );
+        }
     }
 
     private function generateServiceProvider(string $path, string $namespace, string $package, string $layerPath): void
