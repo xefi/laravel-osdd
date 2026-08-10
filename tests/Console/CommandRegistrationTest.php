@@ -8,6 +8,38 @@ use Xefi\LaravelOSDD\Tests\TestCase;
 
 class CommandRegistrationTest extends TestCase
 {
+    private const GENERATOR_COMMANDS = [
+        'osdd:cast',
+        'osdd:channel',
+        'osdd:class',
+        'osdd:command',
+        'osdd:config',
+        'osdd:controller',
+        'osdd:enum',
+        'osdd:event',
+        'osdd:exception',
+        'osdd:factory',
+        'osdd:interface',
+        'osdd:job',
+        'osdd:listener',
+        'osdd:mail',
+        'osdd:middleware',
+        'osdd:migration',
+        'osdd:model',
+        'osdd:notification',
+        'osdd:observer',
+        'osdd:policy',
+        'osdd:provider',
+        'osdd:request',
+        'osdd:resource',
+        'osdd:rule',
+        'osdd:scope',
+        'osdd:seeder',
+        'osdd:test',
+        'osdd:trait',
+        'osdd:view',
+    ];
+
     private const NON_GENERATOR_COMMANDS = [
         'osdd:layer',
         'osdd:phpunit',
@@ -20,13 +52,18 @@ class CommandRegistrationTest extends TestCase
         $this->artisan('list')->assertExitCode(0);
     }
 
+    public function testItRegistersEveryOsddCommand(): void
+    {
+        $expected = array_merge(self::GENERATOR_COMMANDS, self::NON_GENERATOR_COMMANDS);
+
+        sort($expected);
+
+        $this->assertSame($expected, array_keys($this->osddCommands()));
+    }
+
     public function testEveryOsddCommandResolvesUnderTheNameItIsRegisteredWith(): void
     {
-        $commands = $this->osddCommands();
-
-        $this->assertNotEmpty($commands);
-
-        foreach ($commands as $name => $command) {
+        foreach ($this->osddCommands() as $name => $command) {
             $this->assertSame(
                 $name,
                 $command->getName(),
@@ -37,13 +74,11 @@ class CommandRegistrationTest extends TestCase
 
     public function testEveryOsddGeneratorAcceptsALayerOption(): void
     {
-        foreach ($this->osddCommands() as $name => $command) {
-            if (in_array($name, self::NON_GENERATOR_COMMANDS, true)) {
-                continue;
-            }
+        $commands = $this->osddCommands();
 
+        foreach (self::GENERATOR_COMMANDS as $name) {
             $this->assertTrue(
-                $command->getDefinition()->hasOption('layer'),
+                $commands[$name]->getDefinition()->hasOption('layer'),
                 "Command '{$name}' has no --layer option.",
             );
         }
