@@ -52,10 +52,48 @@ trait ChoosesOsddLayer
         parent::interact($input, $output);
     }
 
+    /**
+     * Rebuild the definition when the parent generator is declared with a $signature.
+     *
+     * Illuminate\Console\Command gives the inherited $signature precedence over the $name
+     * declared here and skips specifyParameters(), so without this the command would name
+     * itself after the parent make:* command and expose no --layer option.
+     */
+    protected function configureUsingFluentDefinition(): void
+    {
+        $osddName = $this->name;
+
+        parent::configureUsingFluentDefinition();
+
+        $this->restoreOsddName($osddName);
+        $this->addLayerOption();
+    }
+
     protected function getOptions(): array
     {
-        return array_merge(parent::getOptions(), [
-            ['layer', null, InputOption::VALUE_OPTIONAL, 'The layer to generate the file in'],
-        ]);
+        return array_merge(parent::getOptions(), [$this->layerOption()]);
+    }
+
+    private function restoreOsddName(?string $osddName): void
+    {
+        if ($osddName === null) {
+            return;
+        }
+
+        $this->setName($this->name = $osddName);
+    }
+
+    private function addLayerOption(): void
+    {
+        if ($this->getDefinition()->hasOption('layer')) {
+            return;
+        }
+
+        $this->getDefinition()->addOption($this->layerOption());
+    }
+
+    private function layerOption(): InputOption
+    {
+        return new InputOption('layer', null, InputOption::VALUE_OPTIONAL, 'The layer to generate the file in');
     }
 }
